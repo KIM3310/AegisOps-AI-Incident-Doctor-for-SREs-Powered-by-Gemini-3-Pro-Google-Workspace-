@@ -10,6 +10,133 @@ function clampText(s: string, max: number): string {
   return `${t.slice(0, Math.max(0, max - 20))}\n\n...[truncated ${t.length - max} chars]`;
 }
 
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function asMessage(error: unknown): string {
+  if (!error) return "";
+  if (error instanceof Error) return error.message || "";
+  return String(error);
+}
+
+function isRetriableGeminiError(error: unknown): boolean {
+  const msg = asMessage(error).toLowerCase();
+  if (!msg) return false;
+  const patterns = [
+    " 429",
+    "429 ",
+    "(429)",
+    "rate limit",
+    "resource exhausted",
+    "internal error",
+    "unavailable",
+    "temporarily unavailable",
+    "timeout",
+    "timed out",
+    "deadline exceeded",
+    "network",
+    "econnreset",
+    "socket hang up",
+    "503",
+    "502",
+    "504",
+  ];
+  return patterns.some((p) => msg.includes(p));
+}
+
+function asString(value: unknown, fallback = "", maxChars = 2_000): string {
+  const v = typeof value === "string" ? value : fallback;
+  return clampText(v, maxChars);
+}
+
+function asStringArray(value: unknown, maxItems = 12, maxChars = 400): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .slice(0, maxItems)
+    .map((x) => asString(x, "", maxChars))
+    .filter((x) => x.length > 0);
+}
+
+function normalizeTimeline(value: unknown): IncidentReport["timeline"] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .slice(0, 30)
+    .map((item: any) => {
+      const severity = ["critical", "warning", "info", "success"].includes(item?.severity)
+        ? item.severity
+        : undefined;
+      return {
+        time: asString(item?.time, "Unknown", 32),
+        description: asString(item?.description, "", 400),
+        ...(severity ? { severity } : {}),
+      };
+    })
+    .filter((x) => x.description.length > 0);
+}
+
+function normalizeActionItems(value: unknown): IncidentReport["actionItems"] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .slice(0, 20)
+    .map((item: any) => {
+      const priority = ["HIGH", "MEDIUM", "LOW"].includes(item?.priority) ? item.priority : "MEDIUM";
+      const task = asString(item?.task, "", 500);
+      const owner = asString(item?.owner, "", 120);
+      return {
+        task,
+        priority,
+        ...(owner ? { owner } : {}),
+      };
+    })
+    .filter((x) => x.task.length > 0);
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  const ms = clampNumber(Number(timeoutMs || 45_000), 5_000, 180_000);
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error(`${label} timed out after ${Math.round(ms / 1000)}s.`)), ms);
+    });
+    return (await Promise.race([promise, timeoutPromise])) as T;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
+async function withRetry<T>(input: {
+  label: string;
+  timeoutMs: number;
+  maxAttempts: number;
+  baseDelayMs: number;
+  op: () => Promise<T>;
+}): Promise<T> {
+  const maxAttempts = clampNumber(Number(input.maxAttempts || 1), 1, 6);
+  const baseDelayMs = clampNumber(Number(input.baseDelayMs || 400), 50, 5_000);
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await withTimeout(input.op(), input.timeoutMs, input.label);
+    } catch (error) {
+      lastError = error;
+      if (attempt >= maxAttempts || !isRetriableGeminiError(error)) {
+        throw error;
+      }
+      const jitter = 0.7 + Math.random() * 0.6;
+      const delay = clampNumber(Math.round(baseDelayMs * Math.pow(2, attempt - 1) * jitter), 50, 10_000);
+      await sleep(delay);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(`${input.label} failed.`);
+}
+
 async function getResponseText(response: any): Promise<string> {
   if (!response) return "";
   if (typeof response.text === "function") {
@@ -60,6 +187,9 @@ export async function geminiAnalyzeIncident(input: {
   images: ImageInput[];
   enableGrounding: boolean;
   maxLogChars: number;
+  timeoutMs: number;
+  retryMaxAttempts: number;
+  retryBaseDelayMs: number;
 }): Promise<IncidentReport> {
   const ai = new GoogleGenAI({ apiKey: input.apiKey });
   const logs = clampText(input.logs, input.maxLogChars);
@@ -92,10 +222,17 @@ export async function geminiAnalyzeIncident(input: {
       };
       if (input.enableGrounding) cfg.tools = [{ googleSearch: {} }];
 
-      const response = await ai.models.generateContent({
-        model: input.model,
-        contents: { parts },
-        config: cfg,
+      const response = await withRetry({
+        label: "Gemini analyze request",
+        timeoutMs: input.timeoutMs,
+        maxAttempts: input.retryMaxAttempts,
+        baseDelayMs: input.retryBaseDelayMs,
+        op: () =>
+          ai.models.generateContent({
+            model: input.model,
+            contents: { parts },
+            config: cfg,
+          }),
       });
 
       const text = (await getResponseText(response)).trim();
@@ -103,30 +240,42 @@ export async function geminiAnalyzeIncident(input: {
 
       const jsonStr = extractJsonBlock(text);
       const raw = tryRepairAndParseJson(jsonStr) as any;
+      const rawConfidence = Number(raw.confidenceScore);
+      const confidenceScore = Number.isFinite(rawConfidence)
+        ? clampNumber(Math.round(rawConfidence), 0, 100)
+        : 50;
 
       const report: IncidentReport = {
-        title: raw.title || "Untitled Incident",
-        summary: raw.summary || "No summary available.",
+        title: asString(raw.title, "Untitled Incident", 180),
+        summary: asString(raw.summary, "No summary available.", 4_000),
         severity: ["SEV1", "SEV2", "SEV3"].includes(raw.severity) ? raw.severity : "UNKNOWN",
-        rootCauses: Array.isArray(raw.rootCauses) ? raw.rootCauses : [],
-        reasoning: typeof raw.reasoning === "string" ? raw.reasoning : "",
-        confidenceScore: typeof raw.confidenceScore === "number" ? raw.confidenceScore : 50,
-        timeline: Array.isArray(raw.timeline) ? raw.timeline : [],
-        actionItems: Array.isArray(raw.actionItems) ? raw.actionItems : [],
-        mitigationSteps: Array.isArray(raw.mitigationSteps) ? raw.mitigationSteps : [],
-        impact: raw.impact || {},
-        tags: Array.isArray(raw.tags) ? raw.tags : [],
-        lessonsLearned: raw.lessonsLearned || "",
-        preventionRecommendations: Array.isArray(raw.preventionRecommendations) ? raw.preventionRecommendations : [],
+        rootCauses: asStringArray(raw.rootCauses, 12, 500),
+        reasoning: asString(raw.reasoning, "", 6_000),
+        confidenceScore,
+        timeline: normalizeTimeline(raw.timeline),
+        actionItems: normalizeActionItems(raw.actionItems),
+        mitigationSteps: asStringArray(raw.mitigationSteps, 20, 500),
+        impact: typeof raw.impact === "object" && raw.impact !== null ? raw.impact : {},
+        tags: asStringArray(raw.tags, 20, 60).map((t) => t.toLowerCase()),
+        lessonsLearned: asString(raw.lessonsLearned, "", 2_000),
+        preventionRecommendations: asStringArray(raw.preventionRecommendations, 20, 500),
       };
 
       // Grounding references (only if enabled and present)
       const chunks = response?.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
       const references: ReferenceSource[] = chunks
         .map((c: any) => (c.web ? { title: c.web.title, uri: c.web.uri } : null))
-        .filter((r: any) => r !== null);
+        .filter((r: any) => r !== null)
+        .filter((r: any) => typeof r.uri === "string" && r.uri.trim().length > 0)
+        .map((r: any) => ({
+          title: asString(r.title, "Reference", 180),
+          uri: asString(r.uri, "", 1_000),
+        }))
+        .filter((r: ReferenceSource) => r.uri.length > 0);
 
-      if (references.length > 0) report.references = references;
+      const dedupedReferences = Array.from(new Map(references.map((r) => [r.uri, r])).values()).slice(0, 20);
+
+      if (dedupedReferences.length > 0) report.references = dedupedReferences;
 
       return report;
     } catch (e: any) {
@@ -145,6 +294,9 @@ export async function geminiFollowUp(input: {
   history: { role: "user" | "assistant"; content: string }[];
   question: string;
   enableGrounding: boolean;
+  timeoutMs: number;
+  retryMaxAttempts: number;
+  retryBaseDelayMs: number;
 }): Promise<string> {
   const ai = new GoogleGenAI({ apiKey: input.apiKey });
 
@@ -172,46 +324,63 @@ export async function geminiFollowUp(input: {
   const cfg: any = { safetySettings: SAFETY_SETTINGS };
   if (input.enableGrounding) cfg.tools = [{ googleSearch: {} }];
 
-  const response = await ai.models.generateContent({
-    model: input.model,
-    contents,
-    config: cfg,
+  const response = await withRetry({
+    label: "Gemini follow-up request",
+    timeoutMs: input.timeoutMs,
+    maxAttempts: input.retryMaxAttempts,
+    baseDelayMs: input.retryBaseDelayMs,
+    op: () =>
+      ai.models.generateContent({
+        model: input.model,
+        contents,
+        config: cfg,
+      }),
   });
 
   const text = (await getResponseText(response)).trim();
-  return text || "No answer generated.";
+  return asString(text, "No answer generated.", 8_000) || "No answer generated.";
 }
 
 export async function geminiTts(input: {
   apiKey: string;
   model: string;
   text: string;
+  timeoutMs: number;
+  retryMaxAttempts: number;
+  retryBaseDelayMs: number;
 }): Promise<string | undefined> {
   const ai = new GoogleGenAI({ apiKey: input.apiKey });
   if (!input.text?.trim()) return undefined;
 
-  const response = await ai.models.generateContent({
-    model: input.model,
-    contents: [
-      {
-        parts: [
+  const response = await withRetry({
+    label: "Gemini TTS request",
+    timeoutMs: input.timeoutMs,
+    maxAttempts: input.retryMaxAttempts,
+    baseDelayMs: input.retryBaseDelayMs,
+    op: () =>
+      ai.models.generateContent({
+        model: input.model,
+        contents: [
           {
-            text: `You are a professional SRE. Provide a concise audio briefing.
+            parts: [
+              {
+                text: `You are a professional SRE. Provide a concise audio briefing.
 Instructions: Speak naturally, ignore markdown symbols, and focus on the core issue.
 Summary: "${input.text.trim()}"`,
+              },
+            ],
           },
         ],
-      },
-    ],
-    config: {
-      responseModalities: [Modality.AUDIO],
-      speechConfig: {
-        voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: "Kore" },
+        config: {
+          responseModalities: [Modality.AUDIO],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: "Kore" },
+            },
+          },
+          safetySettings: SAFETY_SETTINGS,
         },
-      },
-      safetySettings: SAFETY_SETTINGS,
-    },
+      }),
   });
 
   return response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;

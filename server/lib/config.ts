@@ -3,11 +3,24 @@ export type DemoMode = "demo" | "live";
 export type GroundingDefault = boolean;
 
 export interface ServerConfig {
+  host: string;
   port: number;
   mode: DemoMode;
   geminiApiKey?: string;
+  geminiTimeoutMs: number;
+  geminiRetryMaxAttempts: number;
+  geminiRetryBaseDelayMs: number;
+  apiKeySettingsToken?: string;
+  allowRemoteApiKeySettings: boolean;
+  trustProxy: boolean;
+  requestBodyLimitMb: number;
   maxImages: number;
+  maxImageBytes: number;
   maxLogChars: number;
+  maxQuestionChars: number;
+  maxTtsChars: number;
+  analyzeCacheTtlSec: number;
+  analyzeCacheMaxEntries: number;
   groundingDefault: GroundingDefault;
   modelAnalyze: string;
   modelTts: string;
@@ -41,16 +54,35 @@ function readBool(name: string, fallback: boolean): boolean {
   return fallback;
 }
 
+function readHost(name: string, fallback: string): string {
+  const raw = String(process.env[name] || "").trim();
+  if (!raw) return fallback;
+  return /\s/.test(raw) ? fallback : raw;
+}
+
 export function loadConfig(): ServerConfig {
   const geminiApiKey = process.env.GEMINI_API_KEY?.trim();
   const mode: DemoMode = geminiApiKey ? "live" : "demo";
 
   return {
+    host: readHost("HOST", "127.0.0.1"),
     port: readInt("PORT", 8787, { min: 1, max: 65535 }),
     mode,
     geminiApiKey: geminiApiKey || undefined,
+    geminiTimeoutMs: readInt("GEMINI_TIMEOUT_MS", 45_000, { min: 5_000, max: 180_000 }),
+    geminiRetryMaxAttempts: readInt("GEMINI_RETRY_MAX_ATTEMPTS", 3, { min: 1, max: 6 }),
+    geminiRetryBaseDelayMs: readInt("GEMINI_RETRY_BASE_DELAY_MS", 400, { min: 50, max: 5_000 }),
+    apiKeySettingsToken: process.env.API_KEY_SETTINGS_TOKEN?.trim() || undefined,
+    allowRemoteApiKeySettings: readBool("ALLOW_REMOTE_API_KEY_SETTINGS", false),
+    trustProxy: readBool("TRUST_PROXY", false),
+    requestBodyLimitMb: readInt("REQUEST_BODY_LIMIT_MB", 25, { min: 1, max: 100 }),
     maxImages: readInt("MAX_IMAGES", 8, { min: 0, max: 16 }),
+    maxImageBytes: readInt("MAX_IMAGE_BYTES", 5_000_000, { min: 100_000, max: 20_000_000 }),
     maxLogChars: readInt("MAX_LOG_CHARS", 50_000, { min: 1_000, max: 500_000 }),
+    maxQuestionChars: readInt("MAX_QUESTION_CHARS", 4_000, { min: 200, max: 20_000 }),
+    maxTtsChars: readInt("MAX_TTS_CHARS", 5_000, { min: 100, max: 20_000 }),
+    analyzeCacheTtlSec: readInt("ANALYZE_CACHE_TTL_SEC", 300, { min: 0, max: 86_400 }),
+    analyzeCacheMaxEntries: readInt("ANALYZE_CACHE_MAX_ENTRIES", 200, { min: 0, max: 5_000 }),
     groundingDefault: readBool("GROUNDING_DEFAULT", false),
     modelAnalyze: (process.env.GEMINI_MODEL_ANALYZE?.trim() || "gemini-3-pro-preview"),
     modelTts: (process.env.GEMINI_MODEL_TTS?.trim() || "gemini-2.5-flash-preview-tts"),

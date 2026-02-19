@@ -5,7 +5,7 @@ const CHAT_WEBHOOK_TIMEOUT_MS = 10_000;
 function isValidWebhookUrl(value: string): boolean {
   try {
     const parsed = new URL(value);
-    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+    return parsed.protocol === 'https:';
   } catch {
     return false;
   }
