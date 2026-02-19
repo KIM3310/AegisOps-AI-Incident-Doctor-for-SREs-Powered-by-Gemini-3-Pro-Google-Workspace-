@@ -1,4 +1,6 @@
 
+import { googleApiJson } from './googleApiClient';
+
 export interface GmailMessage {
   id: string;
   subject: string;
@@ -11,16 +13,12 @@ export interface GmailMessage {
 export async function searchAlertEmails(accessToken: string, options: { maxResults?: number; customQuery?: string } = {}): Promise<{ messages: GmailMessage[] }> {
   try {
     const query = options.customQuery || 'from:alerts@datadog.com OR from:noreply@pagerduty.com OR subject:incident OR subject:alert';
-    const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=${options.maxResults || 10}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+    const maxResults = Math.max(1, Math.min(50, Number(options.maxResults || 10)));
+    const data = await googleApiJson<any>({
+      accessToken,
+      label: 'Gmail search messages',
+      url: `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=${maxResults}`,
     });
-
-    // [Defensive] HTTP 에러 체크
-    if (!res.ok) {
-      throw new Error(`Gmail API error: ${res.status} ${res.statusText}`);
-    }
-
-    const data = await res.json();
     
     // [Defensive] messages 필드가 없거나 null일 수 있음
     const messageList = data.messages || [];
@@ -28,13 +26,11 @@ export async function searchAlertEmails(accessToken: string, options: { maxResul
     const messages = await Promise.all(
       messageList.slice(0, 10).map(async (m: any) => {
         try {
-          const msgRes = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=full`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
+          const msg = await googleApiJson<any>({
+            accessToken,
+            label: `Gmail read message (${m.id})`,
+            url: `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=full`,
           });
-          
-          if (!msgRes.ok) return null; // 개별 메시지 로드 실패 시 무시
-
-          const msg = await msgRes.json();
           const headers = msg.payload?.headers || [];
           const get = (n: string) => headers.find((h: any) => h.name?.toLowerCase() === n.toLowerCase())?.value || '';
 
