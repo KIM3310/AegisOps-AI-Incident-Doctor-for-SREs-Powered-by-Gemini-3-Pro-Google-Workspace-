@@ -81,6 +81,38 @@ Copy `.env.example` to `.env` and fill what you need.
 # If missing, the API runs in deterministic demo mode (no external LLM calls).
 GEMINI_API_KEY=
 
+# Optional: protect /api/settings/api-key with an admin token.
+# Send via Authorization: Bearer <token> or x-api-settings-token header.
+API_KEY_SETTINGS_TOKEN=
+
+# Optional: allow /api/settings/api-key from non-localhost clients.
+# Default is false (localhost only).
+ALLOW_REMOTE_API_KEY_SETTINGS=false
+
+# Optional: API bind host (default: 127.0.0.1).
+# Set HOST=0.0.0.0 only when you explicitly need remote/LAN access.
+HOST=127.0.0.1
+
+# Optional: trust reverse proxy headers (X-Forwarded-For).
+TRUST_PROXY=false
+
+# Optional: Gemini upstream timeout in milliseconds.
+GEMINI_TIMEOUT_MS=45000
+
+# Optional: Gemini retry policy (exponential backoff for transient 429/5xx/timeout).
+GEMINI_RETRY_MAX_ATTEMPTS=3
+GEMINI_RETRY_BASE_DELAY_MS=400
+
+# Optional: API request body and payload guardrails.
+REQUEST_BODY_LIMIT_MB=25
+MAX_IMAGE_BYTES=5000000
+MAX_QUESTION_CHARS=4000
+MAX_TTS_CHARS=5000
+
+# Optional: in-memory cache for duplicate analyze requests.
+ANALYZE_CACHE_TTL_SEC=300
+ANALYZE_CACHE_MAX_ENTRIES=200
+
 # Optional: enable real Google OAuth for Workspace integration (otherwise the UI uses demo auth).
 VITE_GOOGLE_CLIENT_ID=
 
@@ -102,8 +134,13 @@ VITE_ADSENSE_SLOT=1234567890
 VITE_TM_MODEL_URL=
 ```
 
+For local dev, Vite binds to `127.0.0.1` by default.  
+If you need LAN/device testing, set `VITE_DEV_HOST=0.0.0.0` before `npm run dev`.
+
 You can also provide Gemini key from the UI (`API Key` button in top bar).  
 That runtime key is kept in backend memory only and resets when the API server restarts.
+
+Google OAuth access tokens are now restored from session only while valid; expired tokens are cleared automatically.
 
 AdSense review helpers are included in `public/ads.txt`, `public/robots.txt`, `public/sitemap.xml`, `public/about.html`, `public/compliance.html`, and `public/_headers`.
 
