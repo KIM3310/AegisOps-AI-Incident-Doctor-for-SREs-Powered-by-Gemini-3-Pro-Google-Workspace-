@@ -21,6 +21,11 @@ import { useState, useCallback, useEffect } from 'react';
  */
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''; // [Config] GCP Console에서 발급받은 Web Client ID
+const TOKEN_KEY = 'google_access_token';
+const USER_KEY = 'google_user';
+const TOKEN_EXPIRES_AT_KEY = 'google_access_token_expires_at';
+const TOKEN_EXPIRY_GRACE_MS = 30_000;
+const DEMO_TOKEN = 'demo_token';
 
 // 필요한 권한 목록
 const SCOPES = [
@@ -39,6 +44,33 @@ interface GoogleUser {
   picture?: string;
 }
 
+function clearStoredAuth(): void {
+  sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(USER_KEY);
+  sessionStorage.removeItem(TOKEN_EXPIRES_AT_KEY);
+}
+
+function safeParseUser(raw: string | null): GoogleUser | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    const email = String((parsed as any).email || '').trim();
+    const name = String((parsed as any).name || '').trim();
+    const pictureRaw = (parsed as any).picture;
+    const picture = pictureRaw ? String(pictureRaw) : undefined;
+    if (!email || !name) return null;
+    return { email, name, picture };
+  } catch {
+    return null;
+  }
+}
+
+function isExpired(expiresAtMs: number | null): boolean {
+  if (!expiresAtMs || !Number.isFinite(expiresAtMs)) return true;
+  return expiresAtMs <= Date.now() + TOKEN_EXPIRY_GRACE_MS;
+}
+
 export function useGoogleAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,14 +79,23 @@ export function useGoogleAuth() {
 
   // [Effect] 앱 로드 시 세션 스토리지 체크 (새로고침 대응)
   useEffect(() => {
-    const token = sessionStorage.getItem('google_access_token');
-    const u = sessionStorage.getItem('google_user');
-    
-    if (token && u) {
-      setAccessToken(token);
-      setUser(JSON.parse(u));
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    const restoredUser = safeParseUser(sessionStorage.getItem(USER_KEY));
+    const expiresAtRaw = sessionStorage.getItem(TOKEN_EXPIRES_AT_KEY);
+    const expiresAtMs = expiresAtRaw ? Number(expiresAtRaw) : null;
+
+    if (token === DEMO_TOKEN && restoredUser) {
+      setAccessToken(DEMO_TOKEN);
+      setUser(restoredUser);
       setIsAuthenticated(true);
+    } else if (token && restoredUser && !isExpired(expiresAtMs)) {
+      setAccessToken(token);
+      setUser(restoredUser);
+      setIsAuthenticated(true);
+    } else {
+      clearStoredAuth();
     }
+
     setIsLoading(false);
   }, []);
 
@@ -68,16 +109,35 @@ export function useGoogleAuth() {
         client_id: CLIENT_ID,
         scope: SCOPES,
         callback: async (response: any) => {
+          if (response?.error) {
+            clearStoredAuth();
+            setIsAuthenticated(false);
+            setUser(null);
+            setAccessToken(null);
+            setIsLoading(false);
+            return;
+          }
+
           if (response.access_token) {
-            const token = response.access_token;
+            const token = String(response.access_token).trim();
+            const expiresInSec = Number(response.expires_in || 0);
+            const expiresAtMs =
+              Number.isFinite(expiresInSec) && expiresInSec > 0
+                ? Date.now() + expiresInSec * 1000
+                : Date.now() + 55 * 60 * 1000;
+
             setAccessToken(token);
-            sessionStorage.setItem('google_access_token', token);
+            sessionStorage.setItem(TOKEN_KEY, token);
+            sessionStorage.setItem(TOKEN_EXPIRES_AT_KEY, String(expiresAtMs));
 
             // 토큰만으로는 사용자 이름/사진을 알 수 없으므로 UserInfo API 호출
             try {
               const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
                 headers: { Authorization: `Bearer ${token}` },
               });
+              if (!userRes.ok) {
+                throw new Error(`userinfo failed: ${userRes.status}`);
+              }
               const userData = await userRes.json();
               const u: GoogleUser = {
                 email: userData.email,
@@ -86,10 +146,13 @@ export function useGoogleAuth() {
               };
               setUser(u);
               setIsAuthenticated(true);
-              sessionStorage.setItem('google_user', JSON.stringify(u));
+              sessionStorage.setItem(USER_KEY, JSON.stringify(u));
             } catch {
               console.warn('Failed to fetch user profile, but auth is valid');
               setIsAuthenticated(true);
+              const fallbackUser: GoogleUser = { email: 'unknown@google-user', name: 'Google User' };
+              setUser(fallbackUser);
+              sessionStorage.setItem(USER_KEY, JSON.stringify(fallbackUser));
             }
           }
           setIsLoading(false);
@@ -112,29 +175,51 @@ export function useGoogleAuth() {
       };
       
       setUser(demoUser);
-      setAccessToken('demo_token'); 
+      setAccessToken(DEMO_TOKEN); 
       setIsAuthenticated(true);
       
-      sessionStorage.setItem('google_user', JSON.stringify(demoUser));
-      sessionStorage.setItem('google_access_token', 'demo_token');
+      sessionStorage.setItem(USER_KEY, JSON.stringify(demoUser));
+      sessionStorage.setItem(TOKEN_KEY, DEMO_TOKEN);
+      sessionStorage.removeItem(TOKEN_EXPIRES_AT_KEY);
       setIsLoading(false);
     }
   }, []);
 
+  useEffect(() => {
+    if (!accessToken || accessToken === DEMO_TOKEN) return;
+    const expiresAtRaw = sessionStorage.getItem(TOKEN_EXPIRES_AT_KEY);
+    const expiresAtMs = expiresAtRaw ? Number(expiresAtRaw) : 0;
+    if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now()) {
+      clearStoredAuth();
+      setAccessToken(null);
+      setUser(null);
+      setIsAuthenticated(false);
+      return;
+    }
+
+    const timeoutMs = Math.max(1_000, expiresAtMs - Date.now());
+    const timeoutId = window.setTimeout(() => {
+      clearStoredAuth();
+      setAccessToken(null);
+      setUser(null);
+      setIsAuthenticated(false);
+    }, timeoutMs);
+    return () => window.clearTimeout(timeoutId);
+  }, [accessToken]);
+
   const signOut = useCallback(() => {
     // 실제 토큰이라면 권한 취소(Revoke) 호출이 보안상 권장됨
-    if (accessToken && accessToken !== 'demo_token' && (window as any).google?.accounts?.oauth2) {
+    if (accessToken && accessToken !== DEMO_TOKEN && (window as any).google?.accounts?.oauth2) {
       (window as any).google.accounts.oauth2.revoke(accessToken);
     }
     
     setAccessToken(null);
     setUser(null);
     setIsAuthenticated(false);
-    sessionStorage.removeItem('google_access_token');
-    sessionStorage.removeItem('google_user');
+    clearStoredAuth();
   }, [accessToken]);
 
-  const isDemoMode = accessToken === 'demo_token';
+  const isDemoMode = accessToken === DEMO_TOKEN;
 
   return { isAuthenticated, isLoading, user, accessToken, signIn, signOut, isDemoMode };
 }
