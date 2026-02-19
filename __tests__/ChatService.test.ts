@@ -24,6 +24,11 @@ describe('sendToChatWebhook', () => {
     expect(res).toBe(false);
   });
 
+  it('rejects non-https webhook URL', async () => {
+    const res = await sendToChatWebhook('http://chat.example.test/webhook', baseReport);
+    expect(res).toBe(false);
+  });
+
   it('falls back to UNKNOWN severity emoji for unexpected values', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 200 }));
     const report = { ...baseReport, severity: 'SEV9' as IncidentReport['severity'] };

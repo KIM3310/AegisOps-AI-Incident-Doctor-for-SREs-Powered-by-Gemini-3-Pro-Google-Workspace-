@@ -1,29 +1,36 @@
 
 import type { SavedIncident, DashboardStats, GoogleSheetInfo } from '../types';
+import { googleApiFetch, googleApiJson } from './googleApiClient';
 
 export async function createIncidentDataset(accessToken: string, name: string): Promise<GoogleSheetInfo> {
-  const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+  const data = await googleApiJson<any>({
+    accessToken,
+    label: 'Google Sheets create spreadsheet',
+    url: 'https://sheets.googleapis.com/v4/spreadsheets',
     method: 'POST',
-    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       properties: { title: name },
       sheets: [{ properties: { title: 'Incidents' } }, { properties: { title: 'Stats' } }],
     }),
   });
-
-  if (!res.ok) {
-    throw new Error(`Failed to create spreadsheet: ${res.statusText}`);
+  const id = String(data.spreadsheetId || '').trim();
+  const title = String(data.properties?.title || name).trim();
+  const url = String(data.spreadsheetUrl || '').trim();
+  if (!id || !url) {
+    throw new Error('Google Sheets API returned incomplete spreadsheet metadata.');
   }
-
-  const data = await res.json();
-  return { id: data.spreadsheetId, name: data.properties.title, url: data.spreadsheetUrl };
+  return { id, name: title, url };
 }
 
 async function clearSheetRanges(accessToken: string, spreadsheetId: string, ranges: string[]): Promise<void> {
   // Clear multiple ranges to ensure no ghost data remains
-  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchClear`, {
+  await googleApiFetch({
+    accessToken,
+    label: 'Google Sheets batchClear',
+    url: `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchClear`,
     method: 'POST',
-    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ranges }),
   });
 }
@@ -60,9 +67,12 @@ export async function exportIncidentsToSheet(accessToken: string, spreadsheetId:
   ];
 
   // 3. Write Data
-  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`, {
+  await googleApiFetch({
+    accessToken,
+    label: 'Google Sheets batchUpdate',
+    url: `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values:batchUpdate`,
     method: 'POST',
-    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       valueInputOption: 'USER_ENTERED',
       data: [
@@ -71,24 +81,22 @@ export async function exportIncidentsToSheet(accessToken: string, spreadsheetId:
       ],
     }),
   });
-
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    console.error("Sheets Export Error Details:", errorData);
-    throw new Error(`Failed to export data to sheet: ${res.status}`);
-  }
 }
 
 export async function findExistingDatasets(accessToken: string): Promise<GoogleSheetInfo[]> {
   try {
-    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=name contains 'AegisOps' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false&fields=files(id,name,webViewLink)`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+    const data = await googleApiJson<any>({
+      accessToken,
+      label: 'Google Drive list spreadsheet files',
+      url: `https://www.googleapis.com/drive/v3/files?q=name contains 'AegisOps' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false&fields=files(id,name,webViewLink)`,
     });
-
-    if (!res.ok) return [];
-
-    const data = await res.json();
-    return (data.files || []).map((f: any) => ({ id: f.id, name: f.name, url: f.webViewLink }));
+    return (data.files || [])
+      .map((f: any) => ({
+        id: String(f.id || '').trim(),
+        name: String(f.name || '').trim(),
+        url: String(f.webViewLink || '').trim(),
+      }))
+      .filter((f: GoogleSheetInfo) => Boolean(f.id && f.name && f.url));
   } catch (e) {
     console.warn("Failed to find existing datasets", e);
     return [];

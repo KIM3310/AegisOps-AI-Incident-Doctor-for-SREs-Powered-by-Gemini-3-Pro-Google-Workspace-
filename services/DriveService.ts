@@ -1,4 +1,6 @@
 
+import { googleApiFetch, googleApiJson } from './googleApiClient';
+
 export interface DriveFile {
   id: string;
   name: string;
@@ -13,21 +15,23 @@ export interface DownloadedFile {
   type: 'log' | 'image';
 }
 
+function escapeDriveQueryLiteral(value: string): string {
+  return String(value || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 export async function searchIncidentFiles(accessToken: string, options: { query?: string } = {}): Promise<{ files: DriveFile[] }> {
   try {
-    const q = options.query ? `name contains '${options.query}'` : `name contains 'incident' or name contains 'log' or name contains 'grafana'`;
+    const q = options.query
+      ? `name contains '${escapeDriveQueryLiteral(options.query)}'`
+      : `name contains 'incident' or name contains 'log' or name contains 'grafana'`;
     // trashed=false 필터 추가
     const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)} and trashed=false&fields=files(id,name,mimeType,size)`;
 
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+    const data = await googleApiJson<any>({
+      accessToken,
+      label: 'Google Drive search incident files',
+      url,
     });
-
-    if (!res.ok) {
-      throw new Error(`Drive API Search Error: ${res.status}`);
-    }
-
-    const data = await res.json();
     const allFiles = data.files || [];
 
     // [Defensive] 필터링 로직 안전하게 처리
@@ -35,7 +39,14 @@ export async function searchIncidentFiles(accessToken: string, options: { query?
       (f.mimeType?.startsWith('image/') || f.name?.endsWith('.log') || f.name?.endsWith('.txt'))
     );
 
-    return { files: validFiles };
+    return {
+      files: validFiles.map((f: any) => ({
+        id: String(f.id || '').trim(),
+        name: String(f.name || '').trim(),
+        mimeType: String(f.mimeType || '').trim(),
+        size: Number(f.size || 0),
+      })),
+    };
   } catch (error) {
     console.error("Drive Search Error:", error);
     return { files: [] };
@@ -46,14 +57,11 @@ export async function downloadMultipleFiles(accessToken: string, files: DriveFil
   const results = await Promise.all(
     files.map(async (f) => {
       try {
-        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
+        const res = await googleApiFetch({
+          accessToken,
+          label: `Google Drive download file (${f.name})`,
+          url: `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`,
         });
-
-        if (!res.ok) {
-          console.warn(`Failed to download file ${f.name}: ${res.status}`);
-          return null;
-        }
 
         if (f.mimeType?.startsWith('image/')) {
           const blob = await res.blob();

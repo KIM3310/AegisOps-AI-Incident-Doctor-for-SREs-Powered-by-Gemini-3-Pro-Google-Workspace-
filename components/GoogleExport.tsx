@@ -41,8 +41,13 @@ export const GoogleExport: React.FC<Props> = ({ report, onClose }) => {
     localStorage.setItem('aegisops_webhook_url', val);
   };
 
+  const upsertResult = (next: ExportResult) => {
+    setResults((prev) => [...prev.filter((r) => r.type !== next.type), next]);
+  };
+
   const exportTo = async (type: ExportType) => {
     if (!accessToken) return;
+    setResults((prev) => prev.filter((r) => r.type !== type));
     setExporting(type);
 
     try {
@@ -61,14 +66,17 @@ export const GoogleExport: React.FC<Props> = ({ report, onClose }) => {
         switch (type) {
           case 'docs':
             const doc = await DocsService.createPostMortemDoc(accessToken, report);
+            if (!doc?.url) throw new Error('Google Docs did not return a document URL.');
             url = doc.url;
             break;
           case 'slides':
             const slide = await SlidesService.createIncidentSlides(accessToken, report);
+            if (!slide?.url) throw new Error('Google Slides did not return a presentation URL.');
             url = slide.url;
             break;
           case 'calendar':
             const event = await CalendarService.createReviewMeeting(accessToken, report);
+            if (!event?.url) throw new Error('Google Calendar did not return an event URL.');
             url = event.url;
             break;
           case 'chat':
@@ -77,14 +85,17 @@ export const GoogleExport: React.FC<Props> = ({ report, onClose }) => {
               setExporting(null);
               return;
             }
-            await ChatService.sendToChatWebhook(webhookUrl, report);
+            if (!(await ChatService.sendToChatWebhook(webhookUrl, report))) {
+              throw new Error('Failed to send Google Chat webhook.');
+            }
             break;
         }
       }
 
-      setResults((p) => [...p, { type, url, success: true }]);
+      upsertResult({ type, url, success: true });
     } catch (e) {
-      setResults((p) => [...p, { type, success: false, error: String(e) }]);
+      const message = e instanceof Error ? e.message : String(e);
+      upsertResult({ type, success: false, error: message });
     }
 
     setExporting(null);
@@ -128,7 +139,8 @@ export const GoogleExport: React.FC<Props> = ({ report, onClose }) => {
               const isLoading = exporting === type;
 
               return (
-                <div key={type} className="flex items-center gap-3 p-2 bg-bg rounded border border-border">
+                <div key={type} className="p-2 bg-bg rounded border border-border">
+                  <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded bg-accent/10 flex items-center justify-center" aria-hidden="true">
                     <Icon className="w-4 h-4 text-accent" />
                   </div>
@@ -158,6 +170,12 @@ export const GoogleExport: React.FC<Props> = ({ report, onClose }) => {
                       {isLoading ? <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" /> : 'Export'}
                     </button>
                   )}
+                  </div>
+                  {result && !result.success && result.error ? (
+                    <div className="mt-1 text-2xs text-sev1 break-all" role="status">
+                      {result.error}
+                    </div>
+                  ) : null}
                 </div>
               );
             })}

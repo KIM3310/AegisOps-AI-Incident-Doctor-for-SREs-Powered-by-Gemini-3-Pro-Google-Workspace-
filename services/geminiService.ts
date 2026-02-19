@@ -5,12 +5,34 @@ export type ApiKeySource = "runtime" | "env" | "none";
 
 export interface HealthzResponse {
   ok: boolean;
+  startedAt?: string;
+  serverTime?: string;
+  uptimeSec?: number;
   mode: ApiMode;
   keySource?: ApiKeySource;
   keyConfigured?: boolean;
-  limits: { maxImages: number; maxLogChars: number };
+  limits: {
+    requestBodyLimitMb?: number;
+    maxImages: number;
+    maxImageBytes?: number;
+    maxLogChars: number;
+    maxQuestionChars?: number;
+    maxTtsChars?: number;
+    geminiTimeoutMs?: number;
+    geminiRetryMaxAttempts?: number;
+    geminiRetryBaseDelayMs?: number;
+    analyzeCacheTtlSec?: number;
+    analyzeCacheMaxEntries?: number;
+  };
   defaults: { grounding: boolean };
   models: { analyze: string; tts: string };
+  caches?: {
+    analyze?: {
+      enabled?: boolean;
+      entries?: number;
+      inFlight?: number;
+    };
+  };
 }
 
 export interface GeminiApiKeyStatus {
