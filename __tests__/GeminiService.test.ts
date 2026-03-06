@@ -13,12 +13,14 @@ describe("geminiService apiFetch", () => {
         JSON.stringify({
           ok: true,
           service: "aegisops-api",
+          status: "ok",
           mode: "demo",
           limits: { maxImages: 8, maxLogChars: 1000 },
           defaults: { grounding: false },
           models: { analyze: "x", tts: "y" },
           links: { apiKey: "/api/settings/api-key" },
           diagnostics: { nextAction: "configure Gemini API key or switch to Ollama for live incident analysis." },
+          ops_contract: { schema: "ops-envelope-v1", version: 1, required_fields: ["service", "status", "diagnostics.nextAction"] },
           capabilities: ["incident-analysis"],
         }),
         { status: 200, headers: { "Content-Type": "application/json" } }
@@ -31,6 +33,7 @@ describe("geminiService apiFetch", () => {
     expect(payload.mode).toBe("demo");
     expect(payload.links?.apiKey).toBe("/api/settings/api-key");
     expect(payload.diagnostics?.nextAction).toContain("configure Gemini API key");
+    expect(payload.ops_contract?.schema).toBe("ops-envelope-v1");
   });
 
   it("includes request_id from response headers in API errors", async () => {
