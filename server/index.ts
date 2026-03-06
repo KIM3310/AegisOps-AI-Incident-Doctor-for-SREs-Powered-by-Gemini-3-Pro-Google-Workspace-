@@ -245,6 +245,7 @@ app.get("/api/healthz", (req, res) => {
   const cacheEntries = analyzeCache.size();
   res.json({
     ok: true,
+    status: "ok",
     service: "aegisops-api",
     requestId: req.requestId,
     startedAt,
@@ -286,6 +287,11 @@ app.get("/api/healthz", (req, res) => {
         provider === "demo"
           ? "configure Gemini API key or switch to Ollama for live incident analysis."
           : "runtime healthy",
+    },
+    ops_contract: {
+      schema: "ops-envelope-v1",
+      version: 1,
+      required_fields: ["service", "status", "diagnostics.nextAction"],
     },
     capabilities: [
       "incident-analysis",
