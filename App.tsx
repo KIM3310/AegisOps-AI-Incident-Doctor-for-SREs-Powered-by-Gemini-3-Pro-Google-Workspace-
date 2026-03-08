@@ -414,6 +414,36 @@ export default function App() {
     loadPreset(preferredPreset);
   };
 
+  const copyStrongestPreset = async () => {
+    const preferredPreset =
+      SAMPLE_PRESETS.find((preset) => preset.name === 'LLM Latency Spike') ?? SAMPLE_PRESETS[0];
+    if (!preferredPreset) {
+      addToast('error', 'No preset is available');
+      return;
+    }
+
+    const lines = [
+      'AegisOps strongest preset',
+      `Preset: ${preferredPreset.name}`,
+      `Screenshots: ${preferredPreset.hasImage ? 'included' : 'not included'}`,
+      '',
+      'Fast links',
+      ...(reviewRoutes.length > 0
+        ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
+        : ['- Review routes unavailable. Start with /api/healthz, /api/meta, and /api/review-pack.']),
+      '',
+      'Log excerpt',
+      preferredPreset.logs,
+    ];
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      addToast('success', 'Strongest preset copied');
+    } catch {
+      addToast('error', 'Clipboard copy failed');
+    }
+  };
+
   const handleImportLogs = (importedLogs: string) => {
     setLogs((prev) => (prev ? `${prev}\n\n${importedLogs}` : importedLogs));
     addToast('success', 'Logs imported successfully');
@@ -766,6 +796,12 @@ export default function App() {
                   className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
                 >
                   Load Strongest Preset
+                </button>
+                <button
+                  onClick={copyStrongestPreset}
+                  className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                >
+                  Copy Strongest Preset
                 </button>
               </div>
 
