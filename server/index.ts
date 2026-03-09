@@ -14,6 +14,14 @@ import { buildAnalyzeCacheKey, createAnalyzeCache } from "./lib/analyzeCache";
 import { buildIncidentReplayEvalOverview, buildIncidentReplayEvalSummary } from "./lib/replayEvals";
 import { appendRuntimeEvent, buildRuntimeStoreSummary } from "./lib/runtimeStore";
 import {
+  appendLiveSessionEvent,
+  buildLiveSessionDetail,
+  buildLiveSessionList,
+  buildLiveSessionStoreSummary,
+  normalizeLiveSessionId,
+  normalizeLiveSessionLane,
+} from "./lib/sessionStore";
+import {
   buildAegisOpsLiveSessionPack,
   buildAegisOpsReviewPack,
   buildAegisOpsServiceMeta,
@@ -24,17 +32,21 @@ import { normalizeAndValidateImages } from "./lib/validation";
 type AnalyzeBody = {
   logs?: string;
   images?: { mimeType?: string; data?: string }[];
+  lane?: string;
   options?: { enableGrounding?: boolean };
+  sessionId?: string;
 };
 
 type FollowUpBody = {
   report?: any;
   history?: { role: "user" | "assistant"; content: string }[];
+  lane?: string;
   question?: string;
   options?: { enableGrounding?: boolean };
+  sessionId?: string;
 };
 
-type TtsBody = { text?: string };
+type TtsBody = { text?: string; lane?: string; sessionId?: string };
 type ApiKeyBody = { apiKey?: string };
 type KeySource = "runtime" | "env" | "ollama" | "none";
 type ActiveProvider = "demo" | "gemini" | "ollama";
@@ -126,7 +138,14 @@ function classifyEndpoint(path: string): RuntimeEndpointKey {
   if (path.startsWith("/api/tts")) return "tts";
   if (path.startsWith("/api/evals/replays")) return "replay";
   if (path.startsWith("/api/meta") || path.startsWith("/api/runtime/scorecard")) return "meta";
-  if (path.startsWith("/api/review-pack") || path.startsWith("/api/live-session-pack") || path.startsWith("/api/schema")) return "review";
+  if (
+    path.startsWith("/api/review-pack") ||
+    path.startsWith("/api/live-session-pack") ||
+    path.startsWith("/api/live-sessions") ||
+    path.startsWith("/api/schema")
+  ) {
+    return "review";
+  }
   if (path.startsWith("/api/settings")) return "settings";
   if (path.startsWith("/api/healthz")) return "health";
   return "other";
@@ -203,8 +222,23 @@ function normalizeScorecardFocus(value: unknown): RuntimeScorecardFocus {
   return "traffic";
 }
 
+function resolveLiveSessionContext(options: {
+  lane?: string;
+  requestId?: string;
+  sessionId?: string;
+}) {
+  return {
+    lane: normalizeLiveSessionLane(options.lane),
+    sessionId: normalizeLiveSessionId(
+      options.sessionId,
+      options.requestId ? `session-${options.requestId}` : `session-${nextRequestId()}`
+    ),
+  };
+}
+
 function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
   const persisted = buildRuntimeStoreSummary(10);
+  const liveSessions = buildLiveSessionStoreSummary(5);
   const replaySummary = buildIncidentReplayEvalSummary(cfg.maxLogChars, {
     status: focus === "quality" ? "fail" : undefined,
     limit: focus === "traffic" ? 3 : 4,
@@ -283,6 +317,8 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       analyzeCacheHitRatePct: toPercent(runtimeTelemetry.analyze.cacheHits, analyzeVolume),
       sharedInflightReusePct: toPercent(runtimeTelemetry.analyze.sharedInflightHits, analyzeVolume),
       persistedEventCount: persisted.persistedCount,
+      liveSessionCount: liveSessions.sessionCount,
+      liveSessionEventCount: liveSessions.totalEvents,
     },
     analyzeRuntime: {
       cacheHits: runtimeTelemetry.analyze.cacheHits,
@@ -309,6 +345,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       statusClasses: persisted.statusClasses,
       recentEvents: persisted.recentEvents,
     },
+    liveSessions,
     operatorAuth: {
       enabled: isOperatorAuthEnabled(),
       protectedRoutes: ["/api/analyze", "/api/followup", "/api/tts"],
@@ -319,6 +356,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
     links: {
       healthz: "/api/healthz",
       meta: "/api/meta",
+      liveSessions: "/api/live-sessions",
       liveSessionPack: "/api/live-session-pack",
       reviewPack: "/api/review-pack",
       replaySummary: "/api/evals/replays/summary",
@@ -589,6 +627,7 @@ app.get("/api/healthz", (req, res) => {
       analyze: "/api/analyze",
       followup: "/api/followup",
       tts: "/api/tts",
+      liveSessions: "/api/live-sessions",
       liveSessionPack: "/api/live-session-pack",
       reviewPack: "/api/review-pack",
       replayEvals: "/api/evals/replays",
@@ -637,6 +676,46 @@ app.get("/api/runtime/scorecard", (req, res) => {
     return sendError(req, res, 400, "focus must be one of 'traffic', 'quality', or 'reliability'.");
   }
   return res.json(buildRuntimeScorecard(normalizeScorecardFocus(rawFocus)));
+});
+
+app.get("/api/live-sessions", (req, res) => {
+  const rawLane = String(req.query.lane || "").trim();
+  const rawLimit = Number.parseInt(String(req.query.limit || ""), 10);
+  if (
+    rawLane &&
+    !["incident-command", "commander-handoff", "review", "training"].includes(
+      rawLane
+    )
+  ) {
+    return sendError(
+      req,
+      res,
+      400,
+      "lane must be incident-command, commander-handoff, review, or training."
+    );
+  }
+
+  return res.json(
+    buildLiveSessionList({
+      lane: rawLane ? normalizeLiveSessionLane(rawLane) : undefined,
+      limit: Number.isFinite(rawLimit) ? rawLimit : undefined,
+    })
+  );
+});
+
+app.get("/api/live-sessions/:sessionId", (req, res) => {
+  const sessionId = normalizeLiveSessionId(
+    String(req.params.sessionId || ""),
+    ""
+  );
+  if (!sessionId) {
+    return sendError(req, res, 400, "Missing sessionId.");
+  }
+  const detail = buildLiveSessionDetail(sessionId);
+  if (!detail) {
+    return sendError(req, res, 404, `Unknown live session: ${sessionId}`);
+  }
+  return res.json(detail);
 });
 
 app.get("/api/live-session-pack", (req, res) => {
@@ -755,6 +834,11 @@ app.post("/api/analyze", async (req, res) => {
     }
 
     const body = (req.body || {}) as AnalyzeBody;
+    const liveSession = resolveLiveSessionContext({
+      lane: body.lane,
+      requestId: req.requestId,
+      sessionId: body.sessionId,
+    });
     const logs = String(body.logs || "").slice(0, cfg.maxLogChars);
     const enableGrounding = Boolean(body.options?.enableGrounding ?? cfg.groundingDefault);
 
@@ -776,14 +860,40 @@ app.post("/api/analyze", async (req, res) => {
     const cached = analyzeCache.get(cacheKey);
     if (cached) {
       runtimeTelemetry.analyze.cacheHits += 1;
-      return res.json(cached);
+      appendLiveSessionEvent({
+        eventKind: "analyze",
+        imageCount: images.length,
+        lane: liveSession.lane,
+        logsChars: logs.length,
+        provider,
+        reportSeverity: cached.severity,
+        reportSummary: cached.summary,
+        reportTitle: cached.title,
+        requestId: req.requestId,
+        sessionId: liveSession.sessionId,
+        timestamp: new Date().toISOString(),
+      });
+      return res.json({ ...cached, sessionId: liveSession.sessionId });
     }
 
     const inFlight = analyzeInFlight.get(cacheKey);
     if (inFlight) {
       runtimeTelemetry.analyze.sharedInflightHits += 1;
       const shared = await inFlight;
-      return res.json(shared);
+      appendLiveSessionEvent({
+        eventKind: "analyze",
+        imageCount: images.length,
+        lane: liveSession.lane,
+        logsChars: logs.length,
+        provider,
+        reportSeverity: shared.severity,
+        reportSummary: shared.summary,
+        reportTitle: shared.title,
+        requestId: req.requestId,
+        sessionId: liveSession.sessionId,
+        timestamp: new Date().toISOString(),
+      });
+      return res.json({ ...shared, sessionId: liveSession.sessionId });
     }
     runtimeTelemetry.analyze.cacheMisses += 1;
     runtimeTelemetry.analyze.providerCalls += 1;
@@ -824,7 +934,20 @@ app.post("/api/analyze", async (req, res) => {
     try {
       const report = await work;
       analyzeCache.set(cacheKey, report);
-      return res.json(report);
+      appendLiveSessionEvent({
+        eventKind: "analyze",
+        imageCount: images.length,
+        lane: liveSession.lane,
+        logsChars: logs.length,
+        provider,
+        reportSeverity: report.severity,
+        reportSummary: report.summary,
+        reportTitle: report.title,
+        requestId: req.requestId,
+        sessionId: liveSession.sessionId,
+        timestamp: new Date().toISOString(),
+      });
+      return res.json({ ...report, sessionId: liveSession.sessionId });
     } finally {
       analyzeInFlight.delete(cacheKey);
     }
@@ -841,6 +964,11 @@ app.post("/api/followup", async (req, res) => {
     }
 
     const body = (req.body || {}) as FollowUpBody;
+    const liveSession = resolveLiveSessionContext({
+      lane: body.lane,
+      requestId: req.requestId,
+      sessionId: body.sessionId,
+    });
     const question = String(body.question || "").trim().slice(0, cfg.maxQuestionChars);
     if (!question) return sendError(req, res, 400, "Missing question.");
 
@@ -859,7 +987,19 @@ app.post("/api/followup", async (req, res) => {
     const provider = getActiveProvider();
     if (provider === "demo") {
       const answer = demoFollowUpAnswer({ report, question });
-      return res.json({ answer });
+      appendLiveSessionEvent({
+        eventKind: "followup",
+        lane: liveSession.lane,
+        provider,
+        question,
+        requestId: req.requestId,
+        reportSeverity: report?.severity,
+        reportSummary: report?.summary,
+        reportTitle: report?.title,
+        sessionId: liveSession.sessionId,
+        timestamp: new Date().toISOString(),
+      });
+      return res.json({ answer, sessionId: liveSession.sessionId });
     }
 
     const answer =
@@ -891,7 +1031,19 @@ app.post("/api/followup", async (req, res) => {
               retryBaseDelayMs: cfg.geminiRetryBaseDelayMs,
             });
           })();
-    return res.json({ answer });
+    appendLiveSessionEvent({
+      eventKind: "followup",
+      lane: liveSession.lane,
+      provider,
+      question,
+      requestId: req.requestId,
+      reportSeverity: report?.severity,
+      reportSummary: report?.summary,
+      reportTitle: report?.title,
+      sessionId: liveSession.sessionId,
+      timestamp: new Date().toISOString(),
+    });
+    return res.json({ answer, sessionId: liveSession.sessionId });
   } catch (e: any) {
     const message = e?.message || String(e);
     return sendError(req, res, classifyErrorStatus(e), message);
@@ -905,11 +1057,27 @@ app.post("/api/tts", async (req, res) => {
     }
 
     const body = (req.body || {}) as TtsBody;
+    const liveSession = resolveLiveSessionContext({
+      lane: body.lane,
+      requestId: req.requestId,
+      sessionId: body.sessionId,
+    });
     const text = String(body.text || "").trim().slice(0, cfg.maxTtsChars);
     if (!text) return sendError(req, res, 400, "Missing text.");
 
     const provider = getActiveProvider();
-    if (provider === "demo" || provider === "ollama") return res.json({ audioBase64: undefined });
+    if (provider === "demo" || provider === "ollama") {
+      appendLiveSessionEvent({
+        eventKind: "tts",
+        lane: liveSession.lane,
+        provider,
+        requestId: req.requestId,
+        sessionId: liveSession.sessionId,
+        timestamp: new Date().toISOString(),
+        ttsChars: text.length,
+      });
+      return res.json({ audioBase64: undefined, sessionId: liveSession.sessionId });
+    }
 
     const effectiveApiKey = getEffectiveGeminiApiKey();
     if (!effectiveApiKey) {
@@ -924,7 +1092,16 @@ app.post("/api/tts", async (req, res) => {
       retryMaxAttempts: cfg.geminiRetryMaxAttempts,
       retryBaseDelayMs: cfg.geminiRetryBaseDelayMs,
     });
-    return res.json({ audioBase64 });
+    appendLiveSessionEvent({
+      eventKind: "tts",
+      lane: liveSession.lane,
+      provider,
+      requestId: req.requestId,
+      sessionId: liveSession.sessionId,
+      timestamp: new Date().toISOString(),
+      ttsChars: text.length,
+    });
+    return res.json({ audioBase64, sessionId: liveSession.sessionId });
   } catch (e: any) {
     const message = e?.message || String(e);
     return sendError(req, res, classifyErrorStatus(e), message);
