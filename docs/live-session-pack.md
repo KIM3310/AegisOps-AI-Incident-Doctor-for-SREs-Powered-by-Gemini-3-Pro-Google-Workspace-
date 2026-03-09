@@ -13,6 +13,7 @@ Core routes:
 
 - `/api/healthz`
 - `/api/runtime/scorecard`
+- `/api/live-sessions`
 - `/api/live-session-pack`
 - `/api/review-pack`
 - `/api/schema/report`

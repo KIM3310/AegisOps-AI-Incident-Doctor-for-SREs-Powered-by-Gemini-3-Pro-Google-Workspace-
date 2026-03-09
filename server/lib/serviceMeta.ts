@@ -190,6 +190,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
     },
     links: {
       healthz: "/api/healthz",
+      liveSessions: "/api/live-sessions",
       liveSessionPack: "/api/live-session-pack",
       reviewPack: "/api/review-pack",
       runtimeScorecard: "/api/runtime/scorecard",
@@ -254,6 +255,7 @@ export function buildAegisOpsLiveSessionPack(options: ServiceMetaOptions) {
     liveFlow: [
       "Start with /api/healthz and /api/runtime/scorecard to confirm the backend can support a live bridge.",
       "Capture operator voice, screenshots, and logs in one incident session without dropping the structured report contract.",
+      "Use /api/live-sessions to reopen prior command loops and keep handoff-ready context visible across multiple requests.",
       "Use replay proof and schema guidance before turning the live summary into downstream actions or exports.",
       "Close the session with a handoff-ready incident report that stays reviewable after the call ends.",
     ],
@@ -265,6 +267,7 @@ export function buildAegisOpsLiveSessionPack(options: ServiceMetaOptions) {
       recommendedReviewRoutes: [
         "/api/healthz",
         "/api/runtime/scorecard",
+        "/api/live-sessions",
         "/api/live-session-pack",
         "/api/review-pack",
         "/api/schema/report",
@@ -272,6 +275,11 @@ export function buildAegisOpsLiveSessionPack(options: ServiceMetaOptions) {
     },
     proofAssets: [
       ...buildAegisOpsProofAssets(),
+      {
+        label: "Live session history",
+        path: "/api/live-sessions",
+        kind: "route",
+      },
       {
         label: "Live session pack",
         path: "/api/live-session-pack",
