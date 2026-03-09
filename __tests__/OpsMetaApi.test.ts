@@ -112,7 +112,9 @@ describe("service meta endpoints", () => {
     expect(body.analyzeRuntime.cacheMisses).toBeGreaterThan(0);
     expect(typeof body.summary.analyzeCacheHitRatePct).toBe("number");
     expect(typeof body.summary.persistedEventCount).toBe("number");
+    expect(typeof body.summary.liveSessionCount).toBe("number");
     expect(body.persistence.enabled).toBe(true);
+    expect(body.liveSessions.enabled).toBe(true);
     expect(body.persistence.methodCounts.POST).toBeGreaterThanOrEqual(1);
     expect(body.persistence.statusClasses.ok).toBeGreaterThanOrEqual(1);
     expect(body.operatorAuth.enabled).toBe(false);
