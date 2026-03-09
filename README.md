@@ -41,6 +41,12 @@ Companion repo:
 
 ![AegisOps Review Pack](docs/review-pack.svg)
 
+## Role-Ready Artifacts
+
+- AI engineer: [`docs/solution-architecture.md`](docs/solution-architecture.md)
+- solutions architect: [`docs/solution-architecture.md`](docs/solution-architecture.md)
+- sales / solution consultant: [`docs/executive-one-pager.md`](docs/executive-one-pager.md), [`docs/discovery-guide.md`](docs/discovery-guide.md)
+
 ## What It Does
 
 - **Input:** raw text logs + monitoring screenshots
