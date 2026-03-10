@@ -11,6 +11,10 @@ screenshots, and alerts into a report that someone else can review quickly.
 
 into a single, reviewable incident report.
 
+## Portfolio posture
+- Review this repo as an operator surface with multiple runtime postures (demo, Gemini, Ollama), not as a single always-live environment.
+- The live-session pack, review pack, and replay suite matter more than the static UI alone when you judge the product story.
+
 ## Product Family
 
 AegisOps is the multimodal copilot surface in the broader `Aegis` incident-analysis product family.
