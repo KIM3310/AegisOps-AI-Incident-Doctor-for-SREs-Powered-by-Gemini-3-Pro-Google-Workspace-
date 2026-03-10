@@ -35,6 +35,12 @@ Companion repo:
 - Cloudflare Pages demo: https://aegisops-ai-incident-doctor.pages.dev
 - Google AI Studio demo: https://ai.studio/apps/drive/1nInCvCJjSXy0IQGiDeK9gbsjjhhPqtlg?fullscreenApplet=true
 
+## Runtime vs review/demo surfaces
+
+- Primary runtime: the React/Vite UI (`App.tsx`, `components/`, `hooks/`) plus the Express API in `server/` is the main product surface.
+- Review/demo surfaces: the Cloudflare Pages demo, `docs/`, and `samples/` are there so reviewers can inspect the incident flow without wiring live providers first.
+- Repo map: root `*.tsx` files are the app shell, `scripts/` holds replay/load helpers, and `infra/` carries deployment material.
+
 ## Review Pack At A Glance
 
 - Reviewer API surface: `GET /api/healthz`, `GET /api/meta`, `GET /api/review-pack`, `GET /api/schema/report`
