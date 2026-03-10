@@ -550,6 +550,35 @@ export default function App() {
     }
   };
 
+  const copyReviewerBundle = async () => {
+    const lines = [
+      'AegisOps reviewer bundle',
+      `Runtime: ${runtimePosture}`,
+      `Deployment: ${apiHealth?.deployment ?? reviewPack?.deployment ?? 'unknown'}`,
+      `Schema: ${reportSchema?.schemaId ?? 'unavailable'}`,
+      '',
+      'Current review state',
+      ...reviewStateChips.map((chip) => `- ${chip}`),
+      '',
+      'Fast links',
+      ...(reviewRoutes.length > 0
+        ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
+        : ['- Review routes unavailable.']),
+      '',
+      'Proof assets',
+      ...(reviewPack?.proofAssets?.length
+        ? reviewPack.proofAssets.map((item) => `- ${item.label} [${item.kind}]: ${item.path}`)
+        : ['- Proof assets unavailable.']),
+    ];
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      addToast('success', 'Reviewer bundle copied');
+    } catch {
+      addToast('error', 'Clipboard copy failed');
+    }
+  };
+
   const copyEvidenceSnapshot = async () => {
     const lines = [
       'AegisOps evidence snapshot',
@@ -568,6 +597,26 @@ export default function App() {
     try {
       await navigator.clipboard.writeText(lines.join('\n'));
       addToast('success', 'Evidence snapshot copied');
+    } catch {
+      addToast('error', 'Clipboard copy failed');
+    }
+  };
+
+  const copyPayloadBudgetSnapshot = async () => {
+    const lines = [
+      'AegisOps payload budget snapshot',
+      `Logs used: ${logCharsUsed.toLocaleString()}/${maxLogChars.toLocaleString()}`,
+      `Images used: ${imagesWithinBudget}/${maxImages}`,
+      `Extra images trimmed: ${extraImages}`,
+      `Grounding: ${enableGrounding ? 'on' : 'off'}`,
+      `TM Vision: ${enableTmVision ? 'on' : 'off'}`,
+      `Preset: ${selectedPresetSlug ?? 'none'}`,
+      `Incident: ${selectedIncidentId ?? 'none'}`,
+    ];
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      addToast('success', 'Payload budget snapshot copied');
     } catch {
       addToast('error', 'Clipboard copy failed');
     }
@@ -842,11 +891,72 @@ export default function App() {
         if (status === 'IDLE' && (logs.trim() || images.length > 0)) {
           handleAnalyze();
         }
+        return;
+      }
+
+      const target = e.target as HTMLElement | null;
+      const tagName = target?.tagName?.toLowerCase();
+      const isTypingTarget =
+        Boolean(target?.isContentEditable) ||
+        tagName === 'input' ||
+        tagName === 'textarea' ||
+        tagName === 'select';
+      if (isTypingTarget || e.altKey || (!e.shiftKey && (e.metaKey || e.ctrlKey))) {
+        return;
+      }
+      if (!e.shiftKey) {
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+      if (key === 'l') {
+        e.preventDefault();
+        void copyReviewStateLink();
+      } else if (key === 'r') {
+        e.preventDefault();
+        void copyReviewRoutes();
+      } else if (key === 'k') {
+        e.preventDefault();
+        void copyReviewChecklist();
+      } else if (key === 'e') {
+        e.preventDefault();
+        void copyEvidenceSnapshot();
+      } else if (key === 'b') {
+        e.preventDefault();
+        void copyReviewerBundle();
+      } else if (key === 'm') {
+        e.preventDefault();
+        void copyPayloadBudgetSnapshot();
+      } else if (key === 'p') {
+        e.preventDefault();
+        loadStrongestPreset();
+      } else if (key === 'h') {
+        e.preventDefault();
+        setShowHistory((prev) => !prev);
+      } else if (key === '?') {
+        e.preventDefault();
+        addToast('info', 'Hotkeys: ⌘Enter analyze · L link · R routes · K checklist · E evidence · B bundle · M payload budget · P preset · H history');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [logs, images, status]);
+  }, [
+    apiHealth?.deployment,
+    copyEvidenceSnapshot,
+    copyReviewChecklist,
+    copyReviewRoutes,
+    copyReviewStateLink,
+    copyPayloadBudgetSnapshot,
+    copyReviewerBundle,
+    images.length,
+    logs,
+    reportSchema?.schemaId,
+    reviewPack,
+    reviewRoutes,
+    reviewStateChips,
+    runtimePosture,
+    status,
+  ]);
 
   return (
     <div className="min-h-screen bg-bg selection:bg-accent/30 selection:text-white relative overflow-hidden">
@@ -1045,7 +1155,23 @@ export default function App() {
                 >
                   Copy Review Link
                 </button>
+                <button
+                  onClick={copyReviewerBundle}
+                  className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                >
+                  Copy Reviewer Bundle
+                </button>
+                <button
+                  onClick={copyPayloadBudgetSnapshot}
+                  className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                >
+                  Copy Payload Budget
+                </button>
               </div>
+
+              <p className="text-[11px] text-text-dim">
+                Hotkeys: <span className="text-text">⌘Enter</span> analyze · <span className="text-text">L</span> link · <span className="text-text">R</span> routes · <span className="text-text">K</span> checklist · <span className="text-text">E</span> evidence · <span className="text-text">B</span> bundle · <span className="text-text">M</span> payload budget · <span className="text-text">P</span> preset · <span className="text-text">H</span> history
+              </p>
 
               <div className="flex flex-wrap gap-2">
                 <span className="text-[10px] px-2 py-1 rounded-full border bg-accent/10 text-accent border-accent/20">
