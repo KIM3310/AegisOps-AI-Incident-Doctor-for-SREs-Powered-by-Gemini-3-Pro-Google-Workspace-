@@ -35,6 +35,13 @@ import { ReplayEvalCard } from './components/ReplayEvalCard';
 import { OperatorReadinessCard } from './components/OperatorReadinessCard';
 import { ReviewPackCard } from './components/ReviewPackCard';
 import { ToastContainer, ToastMessage } from './components/Toast';
+import {
+  buildReviewShareUrl,
+  buildReviewUrlSearch,
+  parseReviewUrlState,
+  replaceReviewUrlSearch,
+  slugifyPresetName,
+} from './utils/urlState';
 
 interface ImageFile {
   file: File;
@@ -79,6 +86,8 @@ const SAMPLE_PRESETS = [
 ];
 
 export default function App() {
+  const initialReviewUrlState =
+    typeof window === 'undefined' ? {} : parseReviewUrlState(window.location.search);
   const [logs, setLogs] = useState('');
   const [images, setImages] = useState<ImageFile[]>([]);
   const [savedIncidents, setSavedIncidents] = useState<SavedIncident[]>(() => StorageService.getIncidents());
@@ -99,24 +108,39 @@ export default function App() {
   const [apiKeyBusy, setApiKeyBusy] = useState(false);
   const [apiKeySource, setApiKeySource] = useState<ApiKeySource>('none');
   const [showApiKeyPanel, setShowApiKeyPanel] = useState(false);
-  const [enableGrounding, setEnableGrounding] = useState(false);
+  const [enableGrounding, setEnableGrounding] = useState(
+    () => initialReviewUrlState.grounding ?? false
+  );
   const tmConfigured = isTeachableMachineConfigured();
   const isOllamaMode = apiHealth?.provider === 'ollama';
   const isStaticDemo = apiHealth?.deployment === 'static-demo';
   const ttsAvailable = apiHealth?.mode === 'live' && apiHealth?.provider === 'gemini';
-  const [enableTmVision, setEnableTmVision] = useState(tmConfigured);
+  const [enableTmVision, setEnableTmVision] = useState(
+    () => initialReviewUrlState.tm ?? tmConfigured
+  );
   const [tmStatus, setTmStatus] = useState<'IDLE' | 'RUNNING' | 'READY' | 'ERROR'>('IDLE');
   const [tmError, setTmError] = useState<string | null>(null);
   const [tmSignals, setTmSignals] = useState<TmImagePrediction[]>([]);
   
   // Modals & UI State
-  const [showHistory, setShowHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(
+    () => initialReviewUrlState.history ?? false
+  );
   const [showGoogleImport, setShowGoogleImport] = useState(false);
   const [showDatasetExport, setShowDatasetExport] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(
+    () => initialReviewUrlState.incident ?? null
+  );
+  const [selectedPresetSlug, setSelectedPresetSlug] = useState<string | null>(
+    () => initialReviewUrlState.preset ?? null
+  );
+  const [reviewStateHydrated, setReviewStateHydrated] = useState(false);
 
   const imagesRef = useRef(images);
+  const initialReviewStateRef = useRef(initialReviewUrlState);
+  const appliedInitialReviewState = useRef(false);
   const reviewRoutes = reviewPack
     ? Object.entries(reviewPack.links).filter(([, href]) => typeof href === 'string' && href.length > 0)
     : [];
@@ -131,6 +155,13 @@ export default function App() {
   const logsOverBudget = logCharsUsed > maxLogChars;
   const imagesWithinBudget = Math.min(images.length, maxImages);
   const extraImages = Math.max(images.length - maxImages, 0);
+  const reviewStateChips = [
+    selectedPresetSlug ? `Preset ${selectedPresetSlug}` : null,
+    selectedIncidentId ? `Incident ${selectedIncidentId.slice(-8)}` : null,
+    enableGrounding ? 'Grounding ON' : 'Grounding OFF',
+    enableTmVision ? 'TM Vision ON' : 'TM Vision OFF',
+    showHistory ? 'History open' : null,
+  ].filter((value): value is string => Boolean(value));
   
   useEffect(() => {
     imagesRef.current = images;
@@ -195,6 +226,7 @@ export default function App() {
 
   useEffect(() => {
     if (!apiHealth) return;
+    if (typeof initialReviewStateRef.current.grounding === 'boolean') return;
     setEnableGrounding((prev) => prev || apiHealth.defaults?.grounding || false);
   }, [apiHealth]);
 
@@ -213,6 +245,78 @@ export default function App() {
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
+
+  useEffect(() => {
+    if (appliedInitialReviewState.current) return;
+    const initialState = initialReviewStateRef.current;
+    if (!initialState) {
+      appliedInitialReviewState.current = true;
+      setReviewStateHydrated(true);
+      return;
+    }
+
+    if (initialState.history) {
+      setShowHistory(true);
+    }
+
+    if (initialState.incident) {
+      const incident = savedIncidents.find((item) => item.id === initialState.incident);
+      if (incident) {
+        setSelectedIncidentId(incident.id);
+        setSelectedPresetSlug(null);
+        setLogs(incident.inputLogs || '');
+        setImages([]);
+        setReport(incident.report);
+        setStatus('COMPLETE');
+        setError(null);
+      }
+    } else if (initialState.preset) {
+      const preset = SAMPLE_PRESETS.find(
+        (item) => slugifyPresetName(item.name) === initialState.preset
+      );
+      if (preset) {
+        setSelectedPresetSlug(slugifyPresetName(preset.name));
+        setSelectedIncidentId(null);
+        setLogs(preset.logs);
+        if (preset.hasImage) {
+          const byteCharacters = atob(DEMO_IMG_BASE64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'image/png' });
+          const file = new File([blob], 'monitoring_dashboard.png', { type: 'image/png' });
+          setImages([{ file, preview: URL.createObjectURL(file) }]);
+        } else {
+          setImages([]);
+        }
+      }
+    }
+
+    appliedInitialReviewState.current = true;
+    setReviewStateHydrated(true);
+  }, [savedIncidents]);
+
+  useEffect(() => {
+    if (!reviewStateHydrated) return;
+    replaceReviewUrlSearch(
+      buildReviewUrlSearch({
+        preset: selectedPresetSlug ?? undefined,
+        incident: selectedIncidentId ?? undefined,
+        grounding: enableGrounding,
+        tm: enableTmVision,
+        history: showHistory,
+      })
+    );
+  }, [
+    enableGrounding,
+    enableTmVision,
+    reviewStateHydrated,
+    selectedIncidentId,
+    selectedPresetSlug,
+    showHistory,
+  ]);
 
   const handleSaveApiKey = async () => {
     const candidate = apiKeyInput.trim();
@@ -270,6 +374,8 @@ export default function App() {
     }));
     const nextImageCount = imagesRef.current.length + newImages.length;
     setImages(prev => [...prev, ...newImages]);
+    setSelectedIncidentId(null);
+    setSelectedPresetSlug(null);
     if (nextImageCount > maxImages) {
       addToast('info', `Only the first ${maxImages} images will be analyzed (payload safeguard).`);
     }
@@ -320,6 +426,8 @@ export default function App() {
           
           const mergedLogs = contents.join('\n\n');
           setLogs(prev => prev ? `${prev}\n\n${mergedLogs}` : mergedLogs);
+          setSelectedIncidentId(null);
+          setSelectedPresetSlug(null);
           addToast('info', `${textFiles.length} logs added`);
         } catch (err) {
           console.error("File read error:", err);
@@ -332,6 +440,8 @@ export default function App() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const count = processAndAddImages(Array.from(e.target.files));
+      setSelectedIncidentId(null);
+      setSelectedPresetSlug(null);
       addToast('info', `${count} screenshots added`);
     }
     e.target.value = '';
@@ -343,10 +453,15 @@ export default function App() {
       if (target) URL.revokeObjectURL(target.preview);
       return prev.filter((_, i) => i !== index);
     });
+    setSelectedIncidentId(null);
+    setSelectedPresetSlug(null);
   };
 
   const loadPreset = (preset: (typeof SAMPLE_PRESETS)[0]) => {
     setLogs(preset.logs);
+    setSelectedPresetSlug(slugifyPresetName(preset.name));
+    setSelectedIncidentId(null);
+    setShowHistory(false);
     images.forEach(img => URL.revokeObjectURL(img.preview));
 
     if (preset.hasImage) {
@@ -411,6 +526,25 @@ export default function App() {
     try {
       await navigator.clipboard.writeText(lines.join('\n'));
       addToast('success', 'Review routes copied');
+    } catch {
+      addToast('error', 'Clipboard copy failed');
+    }
+  };
+
+  const copyReviewStateLink = async () => {
+    const shareUrl = buildReviewShareUrl(
+      buildReviewUrlSearch({
+        preset: selectedPresetSlug ?? undefined,
+        incident: selectedIncidentId ?? undefined,
+        grounding: enableGrounding,
+        tm: enableTmVision,
+        history: showHistory,
+      })
+    );
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      addToast('success', 'Review state link copied');
     } catch {
       addToast('error', 'Clipboard copy failed');
     }
@@ -513,11 +647,15 @@ export default function App() {
 
   const handleImportLogs = (importedLogs: string) => {
     setLogs((prev) => (prev ? `${prev}\n\n${importedLogs}` : importedLogs));
+    setSelectedIncidentId(null);
+    setSelectedPresetSlug(null);
     addToast('success', 'Logs imported successfully');
   };
 
   const handleImportImages = (importedImages: File[]) => {
     processAndAddImages(importedImages);
+    setSelectedIncidentId(null);
+    setSelectedPresetSlug(null);
     addToast('success', 'Images imported successfully');
   };
 
@@ -620,6 +758,7 @@ export default function App() {
       const analysisTime = Date.now() - startTime;
       const saved = StorageService.saveIncident(result, effectiveLogs, images.length, analysisTime);
       setSavedIncidents((prev) => [saved, ...prev]);
+      setSelectedIncidentId(saved.id);
 
       setReport(result);
       setStatus('COMPLETE');
@@ -640,6 +779,9 @@ export default function App() {
     
     setLogs('');
     setImages([]);
+    setSelectedIncidentId(null);
+    setSelectedPresetSlug(null);
+    setShowHistory(false);
     setReport(null);
     setStatus('IDLE');
     setError(null);
@@ -651,6 +793,7 @@ export default function App() {
   };
 
   const handleEditInputs = () => {
+    setSelectedIncidentId(null);
     setReport(null);
     setStatus('IDLE');
     setError(null);
@@ -667,6 +810,9 @@ export default function App() {
     if (incident && incident.report) {
         images.forEach(img => URL.revokeObjectURL(img.preview));
         setImages([]);
+        setSelectedIncidentId(incident.id);
+        setSelectedPresetSlug(null);
+        setShowHistory(false);
         setReport(incident.report);
         setLogs(incident.inputLogs || '');
         setStatus('COMPLETE');
@@ -684,6 +830,9 @@ export default function App() {
   const handleDeleteIncident = (id: string) => {
     StorageService.deleteIncident(id);
     setSavedIncidents((prev) => prev.filter((inc) => inc.id !== id));
+    if (selectedIncidentId === id) {
+      setSelectedIncidentId(null);
+    }
     addToast('info', 'Incident deleted');
   };
 
@@ -793,6 +942,10 @@ export default function App() {
               <History className="w-3.5 h-3.5" />
               {savedIncidents.length > 0 && <span className="bg-accent/20 text-accent px-1.5 rounded-full text-[10px] font-bold min-w-[1.25rem] text-center">{savedIncidents.length}</span>}
             </button>
+            <button onClick={copyReviewStateLink} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
+              <FileText className="w-3.5 h-3.5" />
+              Copy Review Link
+            </button>
           </div>
         </div>
       </header>
@@ -886,6 +1039,12 @@ export default function App() {
                 >
                   Copy Incident Claim
                 </button>
+                <button
+                  onClick={copyReviewStateLink}
+                  className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                >
+                  Copy Review Link
+                </button>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -898,6 +1057,11 @@ export default function App() {
                 <span className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
                   Replay {replayOverview ? `${replayOverview.passRate}% pass` : 'loading'}
                 </span>
+                {reviewStateChips.map((chip) => (
+                  <span key={chip} className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
+                    {chip}
+                  </span>
+                ))}
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
@@ -1053,7 +1217,11 @@ export default function App() {
                 <textarea
                   id="log-input"
                   value={logs}
-                  onChange={(e) => setLogs(e.target.value)}
+                  onChange={(e) => {
+                    setLogs(e.target.value);
+                    setSelectedIncidentId(null);
+                    setSelectedPresetSlug(null);
+                  }}
                   placeholder="Paste raw logs here..."
                   className="flex-1 w-full p-3 bg-bg border border-border rounded-md text-xs font-mono text-text placeholder-text-dim/50 resize-none focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent/50 transition-all leading-relaxed"
                   spellCheck={false}
