@@ -18,7 +18,7 @@ into a single, reviewable incident report.
 
 ## Role signals
 - **AI engineer:** multimodal evidence handling, grounding controls, and structured incident output are all first-class.
-- **Solution architect:** live/demo posture, reviewer routes, and operator-role boundaries are visible in the product surface.
+- **Solution / cloud architect:** live/demo posture, reviewer routes, and operator-role boundaries are visible in the product surface.
 - **Field / solutions engineer:** the repo is easy to walk from screenshot + logs -> incident report -> reviewer bundle.
 
 ## Product Family
