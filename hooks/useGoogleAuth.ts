@@ -126,7 +126,10 @@ export function useGoogleAuth() {
             } catch {
               console.warn('Failed to fetch user profile, but auth is valid');
               setIsAuthenticated(true);
-              const fallbackUser: GoogleUser = { email: 'unknown@google-user', name: 'Google User' };
+              const fallbackUser: GoogleUser = {
+                email: 'authenticated@profile-unavailable.local',
+                name: 'Authenticated (profile unavailable)',
+              };
               setUser(fallbackUser);
               sessionStorage.setItem(USER_KEY, JSON.stringify(fallbackUser));
             }

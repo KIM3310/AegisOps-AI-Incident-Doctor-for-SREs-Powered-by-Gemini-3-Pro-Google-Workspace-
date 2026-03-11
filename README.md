@@ -1,4 +1,4 @@
-# AegisOps — GCP-based Multimodal SEV1 Incident Copilot
+# AegisOps — Multimodal SEV1 Incident Copilot
 
 ![CI](https://github.com/KIM3310/AegisOps/actions/workflows/ci.yml/badge.svg)
 
@@ -264,8 +264,8 @@ When `VITE_TM_MODEL_URL` is set, AegisOps can run **local browser-side image cla
 
 If `GEMINI_API_KEY` is not set, the API switches to **demo mode**:
 
-- analysis returns a fixed stub report based on the provided logs
-- follow-up Q&A returns a fixed helper response
+- analysis returns a deterministic review-only report based on the provided logs
+- follow-up Q&A returns a deterministic helper response
 - TTS is disabled
 
 This keeps the project runnable without external credentials.
@@ -276,7 +276,7 @@ The Cloudflare Pages deployment also stays usable without a backend. If `/api/*`
 
 - deterministic local incident analysis in the browser
 - local replay-suite scoring
-- demo follow-up answers and Workspace export stubs
+- review-only follow-up answers and explicit Workspace export placeholders
 
 ## Ollama Offline Mode (No Cloud LLM)
 
