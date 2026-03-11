@@ -25,6 +25,7 @@ import {
   type OperatorSessionView,
 } from "./lib/operatorSession";
 import { buildAnalyzeCacheKey, createAnalyzeCache } from "./lib/analyzeCache";
+import { buildAegisOpsProviderComparison } from "./lib/providerComparison";
 import { buildIncidentReplayEvalOverview, buildIncidentReplayEvalSummary } from "./lib/replayEvals";
 import { appendRuntimeEvent, buildRuntimeStoreSummary } from "./lib/runtimeStore";
 import {
@@ -428,6 +429,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       liveSessions: "/api/live-sessions",
       liveSessionPack: "/api/live-session-pack",
       reviewPack: "/api/review-pack",
+      providerComparison: "/api/evals/providers",
       replaySummary: "/api/evals/replays/summary",
       reportSchema: "/api/schema/report",
       runtimeScorecard: "/api/runtime/scorecard",
@@ -840,6 +842,7 @@ app.get("/api/healthz", (req, res) => {
       reviewPack: "/api/review-pack",
       replayEvals: "/api/evals/replays",
       replaySummary: "/api/evals/replays/summary",
+      providerComparison: "/api/evals/providers",
       runtimeScorecard: "/api/runtime/scorecard",
       authSession: "/api/auth/session",
       meta: "/api/meta",
@@ -875,6 +878,18 @@ app.get("/api/evals/replays/summary", (req, res) => {
       category,
       limit,
       status,
+    })
+  );
+});
+
+app.get("/api/evals/providers", (req, res) => {
+  return res.json(
+    buildAegisOpsProviderComparison({
+      deployment: "backend",
+      activeProvider: getActiveProvider(),
+      analyzeModel: getAnalyzeModel(),
+      ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
+      maxLogChars: cfg.maxLogChars,
     })
   );
 });

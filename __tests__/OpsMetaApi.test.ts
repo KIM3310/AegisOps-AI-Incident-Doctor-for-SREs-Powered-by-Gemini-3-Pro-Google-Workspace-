@@ -170,6 +170,22 @@ describe("service meta endpoints", () => {
     expect(Array.isArray(body.recommendations)).toBe(true);
   });
 
+  it("returns a provider comparison surface for reviewer tradeoff decisions", async () => {
+    const res = await fetch(`${baseUrl}/api/evals/providers`);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.service).toBe("aegisops-provider-comparison");
+    expect(body.compareAgainst).toBe("static-demo");
+    expect(body.summary.currentProvider).toBeTruthy();
+    expect(body.providers).toHaveLength(4);
+    expect(body.providers.some((item: { id: string }) => item.id === "gemini")).toBe(true);
+    expect(body.providers.some((item: { id: string }) => item.id === "ollama")).toBe(true);
+    expect(body.links.providerComparison).toBe("/api/evals/providers");
+    expect(body.links.runtimeScorecard).toBe("/api/runtime/scorecard");
+  });
+
   it("enforces required operator roles for runtime mutation routes when configured", async () => {
     const previousToken = process.env.AEGISOPS_OPERATOR_TOKEN;
     const previousRoles = process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES;

@@ -196,6 +196,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
       runtimeScorecard: "/api/runtime/scorecard",
       replayEvals: "/api/evals/replays",
       replaySummary: "/api/evals/replays/summary",
+      providerComparison: "/api/evals/providers",
       reportSchema: "/api/schema/report",
       readme: "https://github.com/KIM3310/AegisOps",
       demo: "https://aegisops-ai-incident-doctor.pages.dev",

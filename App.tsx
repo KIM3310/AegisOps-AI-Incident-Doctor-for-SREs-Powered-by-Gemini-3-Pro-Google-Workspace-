@@ -5,6 +5,7 @@ import type { IncidentReport, SavedIncident, AnalysisStatus, ReplayEvalOverview 
 import {
   analyzeIncident,
   fetchHealthz,
+  fetchProviderComparison,
   fetchReplayEvalOverview,
   fetchGeminiApiKeyStatus,
   fetchReviewPack,
@@ -14,6 +15,7 @@ import {
   clearGeminiApiKey,
   type HealthzResponse,
   type ApiKeySource,
+  type ProviderComparisonResponse,
   type ReviewPackResponse,
   type ServiceMetaResponse,
   type ReportSchemaResponse,
@@ -33,6 +35,7 @@ import { DatasetExport } from './components/DatasetExport';
 import { CommunityHub } from './components/CommunityHub';
 import { ReplayEvalCard } from './components/ReplayEvalCard';
 import { OperatorReadinessCard } from './components/OperatorReadinessCard';
+import { ProviderComparisonCard } from './components/ProviderComparisonCard';
 import { ReviewPackCard } from './components/ReviewPackCard';
 import { ToastContainer, ToastMessage } from './components/Toast';
 import {
@@ -100,6 +103,9 @@ export default function App() {
   const [reviewPack, setReviewPack] = useState<ReviewPackResponse | null>(null);
   const [serviceMeta, setServiceMeta] = useState<ServiceMetaResponse | null>(null);
   const [reportSchema, setReportSchema] = useState<ReportSchemaResponse | null>(null);
+  const [providerComparison, setProviderComparison] = useState<ProviderComparisonResponse | null>(null);
+  const [providerComparisonError, setProviderComparisonError] = useState<string | null>(null);
+  const [providerComparisonLoading, setProviderComparisonLoading] = useState(true);
   const [replayOverview, setReplayOverview] = useState<ReplayEvalOverview | null>(null);
   const [replayEvalError, setReplayEvalError] = useState<string | null>(null);
   const [replayEvalLoading, setReplayEvalLoading] = useState(true);
@@ -204,9 +210,28 @@ export default function App() {
     }
   }, []);
 
+  const loadProviderComparison = useCallback(async () => {
+    setProviderComparisonLoading(true);
+    setProviderComparisonError(null);
+    try {
+      const comparison = await fetchProviderComparison();
+      setProviderComparison(comparison);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to load provider comparison.';
+      setProviderComparisonError(message);
+    } finally {
+      setProviderComparisonLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadReplayOverview();
   }, [loadReplayOverview]);
+
+  useEffect(() => {
+    void loadProviderComparison();
+  }, [loadProviderComparison]);
 
   useEffect(() => {
     let mounted = true;
@@ -1135,6 +1160,12 @@ export default function App() {
               loading={replayEvalLoading}
               error={replayEvalError}
               onRefresh={loadReplayOverview}
+            />
+
+            <ProviderComparisonCard
+              comparison={providerComparison}
+              loading={providerComparisonLoading}
+              error={providerComparisonError}
             />
 
             <ReviewPackCard reviewPack={reviewPack} />
