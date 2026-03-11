@@ -694,6 +694,59 @@ export default function App() {
     }
   };
 
+  const copyEscalationBrief = async () => {
+    const shareUrl = buildReviewShareUrl(
+      buildReviewUrlSearch({
+        preset: selectedPresetSlug ?? undefined,
+        incident: selectedIncidentId ?? undefined,
+        grounding: enableGrounding,
+        tm: enableTmVision,
+        history: showHistory,
+      })
+    );
+    const strongestJourney = reviewPack?.operatorJourney?.[0];
+    const topActions =
+      report?.actionItems?.slice(0, 3).map((item, index) => {
+        const ownerText = item.owner ? ` · ${item.owner}` : '';
+        return `${index + 1}. [${item.priority}] ${item.task}${ownerText}`;
+      }) ?? [];
+    const topCause = report?.rootCauses?.[0] ?? null;
+    const impact = report?.impact;
+    const lines = [
+      'AegisOps escalation brief',
+      `Runtime: ${runtimePosture}`,
+      `Deployment: ${apiHealth?.deployment ?? reviewPack?.deployment ?? 'unknown'}`,
+      `Incident: ${report?.title ?? 'not analyzed yet'}`,
+      `Severity: ${report?.severity ?? 'unavailable'}`,
+      `Summary: ${report?.summary ?? 'Load a preset or analyze logs/screenshots before escalating.'}`,
+      `Users affected: ${impact?.estimatedUsersAffected ?? 'unavailable'}`,
+      `Duration: ${impact?.duration ?? 'unavailable'}`,
+      `Peak latency: ${impact?.peakLatency ?? 'unavailable'}`,
+      `Peak error rate: ${impact?.peakErrorRate ?? 'unavailable'}`,
+      `Top root cause: ${topCause ?? 'unavailable'}`,
+      '',
+      'Immediate actions',
+      ...(topActions.length > 0
+        ? topActions
+        : ['1. Review current evidence, confirm severity, and assign the first mitigation owner.']),
+      '',
+      'Reviewer context',
+      ...(strongestJourney
+        ? [`- ${strongestJourney.surface}: ${strongestJourney.summary}`]
+        : ['- Review pack unavailable. Start with /api/healthz, /api/meta, and /api/review-pack.']),
+      ...reviewRoutes.slice(0, 4).map(([label, href]) => `- ${label}: ${href}`),
+      '',
+      `Share link: ${shareUrl}`,
+    ];
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      addToast('success', 'Escalation brief copied');
+    } catch {
+      addToast('error', 'Clipboard copy failed');
+    }
+  };
+
   const handleImportLogs = (importedLogs: string) => {
     setLogs((prev) => (prev ? `${prev}\n\n${importedLogs}` : importedLogs));
     setSelectedIncidentId(null);
@@ -927,6 +980,9 @@ export default function App() {
       } else if (key === 'm') {
         e.preventDefault();
         void copyPayloadBudgetSnapshot();
+      } else if (key === 'x') {
+        e.preventDefault();
+        void copyEscalationBrief();
       } else if (key === 'p') {
         e.preventDefault();
         loadStrongestPreset();
@@ -935,7 +991,7 @@ export default function App() {
         setShowHistory((prev) => !prev);
       } else if (key === '?') {
         e.preventDefault();
-        addToast('info', 'Hotkeys: ⌘Enter analyze · L link · R routes · K checklist · E evidence · B bundle · M payload budget · P preset · H history');
+        addToast('info', 'Hotkeys: ⌘Enter analyze · L link · R routes · K checklist · E evidence · B bundle · M payload budget · X escalation brief · P preset · H history');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -946,6 +1002,7 @@ export default function App() {
     copyReviewChecklist,
     copyReviewRoutes,
     copyReviewStateLink,
+    copyEscalationBrief,
     copyPayloadBudgetSnapshot,
     copyReviewerBundle,
     images.length,
@@ -1167,10 +1224,16 @@ export default function App() {
                 >
                   Copy Payload Budget
                 </button>
+                <button
+                  onClick={copyEscalationBrief}
+                  className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
+                >
+                  Copy Escalation Brief
+                </button>
               </div>
 
               <p className="text-[11px] text-text-dim">
-                Hotkeys: <span className="text-text">⌘Enter</span> analyze · <span className="text-text">L</span> link · <span className="text-text">R</span> routes · <span className="text-text">K</span> checklist · <span className="text-text">E</span> evidence · <span className="text-text">B</span> bundle · <span className="text-text">M</span> payload budget · <span className="text-text">P</span> preset · <span className="text-text">H</span> history
+                Hotkeys: <span className="text-text">⌘Enter</span> analyze · <span className="text-text">L</span> link · <span className="text-text">R</span> routes · <span className="text-text">K</span> checklist · <span className="text-text">E</span> evidence · <span className="text-text">B</span> bundle · <span className="text-text">M</span> payload budget · <span className="text-text">X</span> escalation brief · <span className="text-text">P</span> preset · <span className="text-text">H</span> history
               </p>
 
               <div className="flex flex-wrap gap-2">
