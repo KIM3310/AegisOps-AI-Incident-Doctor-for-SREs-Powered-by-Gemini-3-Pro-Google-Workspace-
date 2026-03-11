@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { analyzeIncident, fetchHealthz, fetchReplayEvalOverview, fetchReportSchema, fetchReviewPack, fetchServiceMeta } from "../services/geminiService";
+import {
+  analyzeIncident,
+  fetchHealthz,
+  fetchProviderComparison,
+  fetchReplayEvalOverview,
+  fetchReportSchema,
+  fetchReviewPack,
+  fetchServiceMeta,
+} from "../services/geminiService";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -131,6 +139,49 @@ describe("geminiService apiFetch", () => {
     const payload = await fetchReplayEvalOverview();
     expect(payload.summary.totalChecks).toBe(32);
     expect(payload.summary.passRate).toBe(100);
+  });
+
+  it("loads provider comparison telemetry", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          service: "aegisops-provider-comparison",
+          version: 1,
+          generatedAt: "2026-03-11T00:00:00.000Z",
+          compareAgainst: "static-demo",
+          summary: {
+            currentProvider: "demo",
+            currentMode: "demo",
+            headline: "Start with replay proof, then switch providers intentionally.",
+          },
+          providers: [
+            {
+              id: "static-demo",
+              label: "Static demo",
+              costBand: "none",
+              latencyBand: "instant",
+            },
+            {
+              id: "gemini",
+              label: "Gemini live",
+              costBand: "paid",
+              latencyBand: "network-dependent",
+            },
+          ],
+          links: {
+            providerComparison: "/api/evals/providers",
+            runtimeScorecard: "/api/runtime/scorecard",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+
+    const payload = await fetchProviderComparison();
+    expect(payload.service).toBe("aegisops-provider-comparison");
+    expect(payload.providers[1].id).toBe("gemini");
+    expect(payload.links.providerComparison).toBe("/api/evals/providers");
   });
 
   it("loads service meta telemetry", async () => {
@@ -269,6 +320,21 @@ describe("geminiService apiFetch", () => {
     expect(payload.summary.totalChecks).toBe(32);
     expect(payload.summary.passRate).toBe(100);
     expect(payload.cases).toHaveLength(4);
+  });
+
+  it("falls back to static provider comparison when the backend is absent", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("<!doctype html><html><body>app shell</body></html>", {
+        status: 200,
+        headers: { "Content-Type": "text/html" },
+      })
+    );
+
+    const payload = await fetchProviderComparison();
+    expect(payload.service).toBe("aegisops-provider-comparison");
+    expect(payload.compareAgainst).toBe("static-demo");
+    expect(payload.providers).toHaveLength(4);
+    expect(payload.providers.some((item) => item.id === "ollama")).toBe(true);
   });
 
   it("falls back to static service meta when the backend is absent", async () => {

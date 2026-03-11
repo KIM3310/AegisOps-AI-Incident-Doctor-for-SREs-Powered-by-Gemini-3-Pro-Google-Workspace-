@@ -1,7 +1,11 @@
 import type { IncidentReport, ReplayEvalOverview } from "../types";
+import type { ProviderComparisonResponse } from "../server/lib/providerComparison";
+import { buildAegisOpsProviderComparison } from "../server/lib/providerComparison";
 import { buildIncidentReplayEvalOverview } from "../server/lib/replayEvals";
 import { buildAegisOpsReviewPack, buildAegisOpsServiceMeta, buildIncidentReportSchema } from "../server/lib/serviceMeta";
 import { demoAnalyzeIncident, demoFollowUpAnswer } from "../server/lib/demo";
+
+export type { ProviderComparisonResponse } from "../server/lib/providerComparison";
 
 export type ApiMode = "demo" | "live";
 export type ApiProvider = "demo" | "gemini" | "ollama";
@@ -60,6 +64,7 @@ export interface HealthzResponse {
     tts?: string;
     reviewPack?: string;
     replayEvals?: string;
+    providerComparison?: string;
     meta?: string;
     reportSchema?: string;
   };
@@ -113,6 +118,7 @@ export interface ServiceMetaResponse {
     healthz: string;
     reviewPack: string;
     replayEvals: string;
+    providerComparison: string;
     reportSchema: string;
     readme: string;
     demo: string;
@@ -224,6 +230,7 @@ function buildStaticDemoHealthz(): HealthzResponse {
     links: {
       reviewPack: "/api/review-pack",
       replayEvals: "/api/evals/replays",
+      providerComparison: "/api/evals/providers",
       meta: "/api/meta",
       reportSchema: "/api/schema/report",
     },
@@ -264,6 +271,16 @@ function buildStaticDemoReviewPack(): ReviewPackResponse {
     analyzeModel: "Recorded demo",
     ttsModel: "Unavailable",
   }) as ReviewPackResponse;
+}
+
+function buildStaticDemoProviderComparison(): ProviderComparisonResponse {
+  return buildAegisOpsProviderComparison({
+    deployment: "static-demo",
+    activeProvider: "demo",
+    maxLogChars: STATIC_DEMO_MAX_LOG_CHARS,
+    analyzeModel: "Recorded demo",
+    ttsModel: "Unavailable",
+  });
 }
 
 function buildStaticDemoReportSchema(): ReportSchemaResponse {
@@ -393,6 +410,17 @@ export async function fetchReplayEvalOverview(): Promise<ReplayEvalOverview> {
   } catch (error) {
     if (isApiUnavailableError(error)) {
       return buildIncidentReplayEvalOverview(STATIC_DEMO_MAX_LOG_CHARS);
+    }
+    throw error;
+  }
+}
+
+export async function fetchProviderComparison(): Promise<ProviderComparisonResponse> {
+  try {
+    return await apiFetch<ProviderComparisonResponse>("/api/evals/providers");
+  } catch (error) {
+    if (isApiUnavailableError(error)) {
+      return buildStaticDemoProviderComparison();
     }
     throw error;
   }
@@ -540,6 +568,7 @@ export async function generateTTS(text: string): Promise<string | undefined> {
 
 export const GeminiService = {
   fetchHealthz,
+  fetchProviderComparison,
   fetchReplayEvalOverview,
   fetchGeminiApiKeyStatus,
   saveGeminiApiKey,
