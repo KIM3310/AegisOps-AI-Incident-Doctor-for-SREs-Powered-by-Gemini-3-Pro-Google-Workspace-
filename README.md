@@ -12,8 +12,8 @@ screenshots, and alerts into a report that someone else can review quickly.
 into a single, reviewable incident report.
 
 ## Portfolio posture
-- Review this repo as an operator surface with multiple runtime postures (demo, Gemini, Ollama), not as a single always-live environment.
-- The live-session pack, review pack, and replay suite matter more than the static UI alone when you judge the product story.
+- Review this repo like an operator cockpit that can switch runtime posture on purpose, not like a single always-live incident app.
+- The real story is screenshot/log intake -> replay proof -> incident handoff, with runtime mode made explicit the whole way through.
 
 
 ## Role signals
@@ -37,7 +37,7 @@ Companion repo:
 
 ## Runtime vs review/demo surfaces
 
-- Primary runtime: the React/Vite UI (`App.tsx`, `components/`, `hooks/`) plus the Express API in `server/` is the main product surface.
+- Primary runtime: the React/Vite UI (`App.tsx`, `components/`, `hooks/`) plus the Express API in `server/` is the main incident workflow.
 - Review/demo surfaces: the Cloudflare Pages demo, `docs/`, and `samples/` are there so reviewers can inspect the incident flow without wiring live providers first.
 - Repo map: root `*.tsx` files are the app shell, `scripts/` holds replay/load helpers, and `infra/` carries deployment material.
 
