@@ -255,6 +255,17 @@ export default function App() {
   const activeReviewLens = REVIEW_LENSES[reviewLens];
   const reviewLensNextAction = activeReviewLens.actions[0];
   const reviewLensNextStep = activeReviewLens.cards[0];
+  const frontDoorDecisionSupport = {
+    goNow: strongestPreset
+      ? `Load ${strongestPreset.name} so the first click opens on a replay-backed incident instead of an empty runtime claim.`
+      : 'Load one concrete incident preset before you discuss runtime posture.',
+    holdLine: isStaticDemo
+      ? 'Hold live-runtime claims until the conversation explicitly moves from replay proof into provider posture.'
+      : apiHealth?.mode === 'live'
+        ? 'Hold provider claims until one replay-backed incident and one live route both read cleanly.'
+        : 'Hold runtime claims until the incident proof path is concrete enough to survive handoff.',
+    exitWith: `${activeReviewLens.actions[activeReviewLens.actions.length - 1]?.label ?? 'Copy Reviewer Bundle'} once the ${activeReviewLens.label.toLowerCase()} framing reads clearly.`,
+  };
   
   useEffect(() => {
     imagesRef.current = images;
@@ -1306,6 +1317,13 @@ export default function App() {
                     <p className="text-2xs text-text-muted leading-5">
                       {reviewLensNextStep?.[1] ?? 'Start from one concrete incident so the walkthrough lands before provider discussion branches.'}
                     </p>
+                  </div>
+
+                  <div className="rounded-xl border border-border bg-bg/80 px-4 py-3 space-y-2">
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">Decision support</div>
+                    <p className="text-2xs text-text-muted leading-5">Go now · {frontDoorDecisionSupport.goNow}</p>
+                    <p className="text-2xs text-text-muted leading-5">Hold line · {frontDoorDecisionSupport.holdLine}</p>
+                    <p className="text-2xs text-text-muted leading-5">Exit with · {frontDoorDecisionSupport.exitWith}</p>
                   </div>
 
                   <div className="flex flex-wrap gap-2">
