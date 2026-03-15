@@ -1,4 +1,4 @@
-# AegisOps — Multimodal SEV1 Incident Copilot
+# AegisOps — Portfolio-Grade Multimodal SEV1 Incident Copilot
 
 ![CI](https://github.com/KIM3310/AegisOps/actions/workflows/ci.yml/badge.svg)
 
@@ -10,6 +10,14 @@ screenshots, and alerts into a report that someone else can review quickly.
 `collect → reason → decide → communicate`
 
 into a single, reviewable incident report.
+
+## Reviewer quick paths
+
+| Reviewer goal | Fastest path | What it proves |
+|---|---|---|
+| `90-second repo scan` | read this README, then open `docs/PORTFOLIO_PROOF_SURFACE.md` | product story, buyer fit, and proof inventory are explicit |
+| `Deterministic local proof` | `npm install && npm run review:smoke` | review endpoints, schema surface, replay summary, and runtime scorecard all boot locally |
+| `Full engineering verification` | `npm run verify` | typecheck, tests, replay proof, review-surface smoke, and build all pass |
 
 ## Portfolio posture
 - Review this repo like an operator cockpit that can switch runtime posture on purpose, not like a single always-live incident app.
@@ -71,6 +79,7 @@ Companion repo:
 
 ## Further Reading
 
+- Portfolio proof surface: [`docs/PORTFOLIO_PROOF_SURFACE.md`](docs/PORTFOLIO_PROOF_SURFACE.md)
 - Architecture: [`docs/solution-architecture.md`](docs/solution-architecture.md)
 - Overview: [`docs/executive-one-pager.md`](docs/executive-one-pager.md)
 - Discovery notes: [`docs/discovery-guide.md`](docs/discovery-guide.md)
@@ -165,7 +174,7 @@ You can drag & drop sample inputs from `samples/` into the UI:
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 
 ### Quick Start
 
@@ -330,11 +339,22 @@ Notes:
 - LLM: Large Language Model
 
 ## Local Verification
+
+Fast path:
+
 ```bash
 npm install
+npm run review:smoke
+npm run verify
+```
+
+Expanded commands:
+
+```bash
 npm run typecheck
 npm run test
 npm run eval:replays
+npm run review:smoke
 npm run build
 ```
 

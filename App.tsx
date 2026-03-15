@@ -369,6 +369,19 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
+  const copyTextToClipboard = async (text: string, successMessage: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      addToast('success', successMessage);
+    } catch {
+      addToast('error', 'Clipboard copy failed');
+    }
+  };
+
+  const copyLinesToClipboard = async (lines: string[], successMessage: string) => {
+    await copyTextToClipboard(lines.join('\n'), successMessage);
+  };
+
   useEffect(() => {
     if (appliedInitialReviewState.current) return;
     const initialState = initialReviewStateRef.current;
@@ -630,12 +643,7 @@ export default function App() {
         : ['- Review routes unavailable.']),
     ];
 
-    try {
-      await navigator.clipboard.writeText(lines.join('\n'));
-      addToast('success', 'Reviewer checklist copied');
-    } catch {
-      addToast('error', 'Clipboard copy failed');
-    }
+    await copyLinesToClipboard(lines, 'Reviewer checklist copied');
   };
 
   const copyReviewRoutes = async () => {
@@ -646,12 +654,7 @@ export default function App() {
         : ['- Review routes unavailable. Start with /api/healthz, /api/meta, and /api/review-pack.']),
     ];
 
-    try {
-      await navigator.clipboard.writeText(lines.join('\n'));
-      addToast('success', 'Review routes copied');
-    } catch {
-      addToast('error', 'Clipboard copy failed');
-    }
+    await copyLinesToClipboard(lines, 'Review routes copied');
   };
 
   const copyReviewStateLink = async () => {
@@ -665,12 +668,7 @@ export default function App() {
       })
     );
 
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      addToast('success', 'Review state link copied');
-    } catch {
-      addToast('error', 'Clipboard copy failed');
-    }
+    await copyTextToClipboard(shareUrl, 'Review state link copied');
   };
 
   const copyReviewerBundle = async () => {
@@ -694,12 +692,7 @@ export default function App() {
         : ['- Proof assets unavailable.']),
     ];
 
-    try {
-      await navigator.clipboard.writeText(lines.join('\n'));
-      addToast('success', 'Reviewer bundle copied');
-    } catch {
-      addToast('error', 'Clipboard copy failed');
-    }
+    await copyLinesToClipboard(lines, 'Reviewer bundle copied');
   };
 
   const copyEvidenceSnapshot = async () => {
@@ -717,12 +710,7 @@ export default function App() {
         : ['- Supporting assets unavailable. Open /api/review-pack first.']),
     ];
 
-    try {
-      await navigator.clipboard.writeText(lines.join('\n'));
-      addToast('success', 'Evidence snapshot copied');
-    } catch {
-      addToast('error', 'Clipboard copy failed');
-    }
+    await copyLinesToClipboard(lines, 'Evidence snapshot copied');
   };
 
   const copyPayloadBudgetSnapshot = async () => {
@@ -737,12 +725,7 @@ export default function App() {
       `Incident: ${selectedIncidentId ?? 'none'}`,
     ];
 
-    try {
-      await navigator.clipboard.writeText(lines.join('\n'));
-      addToast('success', 'Payload budget snapshot copied');
-    } catch {
-      addToast('error', 'Clipboard copy failed');
-    }
+    await copyLinesToClipboard(lines, 'Payload budget snapshot copied');
   };
 
   const loadStrongestPreset = () => {
@@ -759,12 +742,10 @@ export default function App() {
       return;
     }
 
-    const preferredPreset = strongestPreset;
-
     const lines = [
       'AegisOps strongest preset',
-      `Preset: ${preferredPreset.name}`,
-      `Screenshots: ${preferredPreset.hasImage ? 'included' : 'not included'}`,
+      `Preset: ${strongestPreset.name}`,
+      `Screenshots: ${strongestPreset.hasImage ? 'included' : 'not included'}`,
       '',
       'Fast links',
       ...(reviewRoutes.length > 0
@@ -772,20 +753,14 @@ export default function App() {
         : ['- Review routes unavailable. Start with /api/healthz, /api/meta, and /api/review-pack.']),
       '',
       'Log excerpt',
-      preferredPreset.logs,
+      strongestPreset.logs,
     ];
 
-    try {
-      await navigator.clipboard.writeText(lines.join('\n'));
-      addToast('success', 'Strongest preset copied');
-    } catch {
-      addToast('error', 'Clipboard copy failed');
-    }
+    await copyLinesToClipboard(lines, 'Strongest preset copied');
   };
 
   const copyIncidentClaim = async () => {
     const strongestJourney = reviewPack?.operatorJourney?.[0];
-    const preferredPreset = strongestPreset;
     const lines = [
       'AegisOps incident claim snapshot',
       `Headline: ${reviewPack?.headline ?? 'review pack unavailable'}`,
@@ -794,7 +769,7 @@ export default function App() {
       `Replay pass rate: ${reviewPack ? `${reviewPack.proofBundle.replayPassRate}%` : 'unavailable'}`,
       `Severity accuracy: ${reviewPack ? `${reviewPack.proofBundle.severityAccuracy}%` : 'unavailable'}`,
       `Schema: ${reportSchema?.schemaId ?? 'unavailable'}`,
-      `Preset: ${preferredPreset?.name ?? 'unavailable'}`,
+      `Preset: ${strongestPreset?.name ?? 'unavailable'}`,
       '',
       'Strongest operator proof',
       strongestJourney
@@ -806,12 +781,7 @@ export default function App() {
       `- Runtime modes: ${reviewPack?.proofBundle.runtimeModes?.join(', ') ?? 'unavailable'}`,
     ];
 
-    try {
-      await navigator.clipboard.writeText(lines.join('\n'));
-      addToast('success', 'Incident claim copied');
-    } catch {
-      addToast('error', 'Clipboard copy failed');
-    }
+    await copyLinesToClipboard(lines, 'Incident claim copied');
   };
 
   const copyEscalationBrief = async () => {
