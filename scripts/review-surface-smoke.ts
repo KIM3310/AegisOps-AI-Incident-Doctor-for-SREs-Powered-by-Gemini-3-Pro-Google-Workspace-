@@ -1,5 +1,7 @@
 import { once } from "node:events";
+import { mkdir, writeFile } from "node:fs/promises";
 import type { AddressInfo } from "node:net";
+import { dirname, resolve } from "node:path";
 import { app } from "../server/index";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -14,6 +16,31 @@ async function fetchJson(baseUrl: string, path: string) {
     throw new Error(`${path} failed (${response.status})`);
   }
   return response.json();
+}
+
+function resolveJsonOutPath(argv: string[]) {
+  const inlineFlag = argv.find((arg) => arg.startsWith("--json-out="));
+  if (inlineFlag) {
+    return inlineFlag.slice("--json-out=".length).trim();
+  }
+
+  const flagIndex = argv.findIndex((arg) => arg === "--json-out");
+  if (flagIndex >= 0) {
+    return argv[flagIndex + 1]?.trim() ?? "";
+  }
+
+  return "";
+}
+
+async function writeJsonArtifact(pathValue: string, payload: unknown) {
+  if (!pathValue) {
+    return;
+  }
+
+  const absolutePath = resolve(pathValue);
+  await mkdir(dirname(absolutePath), { recursive: true });
+  await writeFile(absolutePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  console.log(`[smoke] json_out=${absolutePath}`);
 }
 
 async function main() {
@@ -53,45 +80,43 @@ async function main() {
     assert(replaySummary?.summaryId === "incident-replay-summary-v1", "replay summary id mismatch");
     assert(runtimeScorecard?.summary, "runtime scorecard summary missing");
 
-    console.log(
-      JSON.stringify(
-        {
-          smoke: "review-surface",
-          ok: true,
-          baseUrl,
-          runtime: {
-            deployment: healthz?.deployment ?? null,
-            mode: healthz?.mode ?? null,
-            provider: healthz?.provider ?? null,
-          },
-          proof: {
-            reviewPackId: reviewPack.reviewPackId,
-            liveSessionPackId: liveSessionPack.liveSessionPackId,
-            schemaId: schema.schemaId,
-            replaySummaryId: replaySummary.summaryId,
-            replayPassRate: replaySummary?.totals?.passRate ?? null,
-            severityAccuracy: replaySummary?.totals?.severityAccuracy ?? null,
-            requiredFieldCount: Array.isArray(schema.requiredFields)
-              ? schema.requiredFields.length
-              : 0,
-          },
-          reviewRoutes: {
-            healthz: meta?.links?.healthz ?? null,
-            reviewPack: meta?.links?.reviewPack ?? null,
-            liveSessionPack: meta?.links?.liveSessionPack ?? null,
-            runtimeScorecard: meta?.links?.runtimeScorecard ?? null,
-            reportSchema: meta?.links?.reportSchema ?? null,
-          },
-          quality: {
-            totalRequests: runtimeScorecard?.summary?.totalRequests ?? null,
-            persistedEventCount: runtimeScorecard?.summary?.persistedEventCount ?? null,
-            spotlightHeadline: runtimeScorecard?.spotlight?.headline ?? null,
-          },
-        },
-        null,
-        2
-      )
-    );
+    const artifact = {
+      smoke: "review-surface",
+      ok: true,
+      baseUrl,
+      generatedAt: new Date().toISOString(),
+      runtime: {
+        deployment: healthz?.deployment ?? null,
+        mode: healthz?.mode ?? null,
+        provider: healthz?.provider ?? null,
+      },
+      proof: {
+        reviewPackId: reviewPack.reviewPackId,
+        liveSessionPackId: liveSessionPack.liveSessionPackId,
+        schemaId: schema.schemaId,
+        replaySummaryId: replaySummary.summaryId,
+        replayPassRate: replaySummary?.totals?.passRate ?? null,
+        severityAccuracy: replaySummary?.totals?.severityAccuracy ?? null,
+        requiredFieldCount: Array.isArray(schema.requiredFields)
+          ? schema.requiredFields.length
+          : 0,
+      },
+      reviewRoutes: {
+        healthz: meta?.links?.healthz ?? null,
+        reviewPack: meta?.links?.reviewPack ?? null,
+        liveSessionPack: meta?.links?.liveSessionPack ?? null,
+        runtimeScorecard: meta?.links?.runtimeScorecard ?? null,
+        reportSchema: meta?.links?.reportSchema ?? null,
+      },
+      quality: {
+        totalRequests: runtimeScorecard?.summary?.totalRequests ?? null,
+        persistedEventCount: runtimeScorecard?.summary?.persistedEventCount ?? null,
+        spotlightHeadline: runtimeScorecard?.spotlight?.headline ?? null,
+      },
+    };
+
+    console.log(JSON.stringify(artifact, null, 2));
+    await writeJsonArtifact(resolveJsonOutPath(process.argv.slice(2)), artifact);
   } finally {
     await new Promise<void>((resolve, reject) => {
       server.close((error) => {

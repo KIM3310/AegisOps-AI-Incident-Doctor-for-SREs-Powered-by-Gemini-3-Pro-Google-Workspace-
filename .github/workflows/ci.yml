@@ -24,6 +24,9 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Prepare proof artifact directory
+        run: mkdir -p artifacts
+
       - name: Dependency audit (high+)
         run: npm audit --audit-level=high
 
@@ -34,13 +37,22 @@ jobs:
         run: npm test
 
       - name: Replay eval proof
-        run: npm run eval:replays
+        run: npm run eval:replays -- --json-out artifacts/replay-overview.json
 
       - name: Review surface smoke
-        run: npm run review:smoke
+        run: npm run review:smoke -- --json-out artifacts/review-surface-smoke.json
 
       - name: Build
         run: npm run build
+
+      - name: Upload proof artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aegisops-proof-artifacts
+          path: |
+            artifacts/replay-overview.json
+            artifacts/review-surface-smoke.json
 
   review-gate:
     runs-on: ubuntu-latest
