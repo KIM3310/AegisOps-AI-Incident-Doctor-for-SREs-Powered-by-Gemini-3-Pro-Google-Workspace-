@@ -1,7 +1,7 @@
 {
   "name": "AegisOps",
-  "description": "Incident response assistant for logs, screenshots, and Google Workspace export flows.",
-  "version": "2.1.0",
+  "description": "Portfolio-grade multimodal incident copilot for logs, screenshots, replay evaluation, and export-ready incident handoff.",
+  "version": "0.1.0",
   "author": "Doeon Kim",
   "features": [
     "Multimodal incident analysis",

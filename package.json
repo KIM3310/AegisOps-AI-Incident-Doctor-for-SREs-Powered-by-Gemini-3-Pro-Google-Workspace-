@@ -2,7 +2,7 @@
   "name": "aegisops",
   "version": "0.1.0",
   "private": true,
-  "description": "Multimodal incident copilot with replay evaluation, live-session review, and export surfaces.",
+  "description": "Portfolio-grade multimodal incident copilot with replay evals, live-session review, and export surfaces.",
   "type": "module",
   "scripts": {
     "dev:web": "vite",
@@ -11,11 +11,13 @@
     "build": "vite build",
     "preview": "vite preview",
     "eval:replays": "tsx scripts/run-incident-replays.ts",
+    "review:smoke": "tsx scripts/review-surface-smoke.ts",
     "exercise:runtime": "node scripts/exercise-runtime.mjs",
     "load:runtime": "tsx scripts/load-runtime.ts",
     "load:k6": "k6 run scripts/k6-runtime-scorecard.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify": "npm run typecheck && npm test && npm run eval:replays && npm run review:smoke && npm run build"
   },
   "dependencies": {
     "@google/genai": "^1.33.0",
@@ -38,5 +40,24 @@
   },
   "overrides": {
     "minimatch": "^10.2.1"
+  },
+  "author": "Doeon Kim",
+  "homepage": "https://github.com/KIM3310/AegisOps",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KIM3310/AegisOps.git"
+  },
+  "keywords": [
+    "incident-response",
+    "multimodal-ai",
+    "llm-evals",
+    "solution-architecture",
+    "react",
+    "vite",
+    "gemini",
+    "ollama"
+  ],
+  "engines": {
+    "node": ">=20"
   }
 }

@@ -33,6 +33,12 @@ jobs:
       - name: Unit Tests
         run: npm test
 
+      - name: Replay eval proof
+        run: npm run eval:replays
+
+      - name: Review surface smoke
+        run: npm run review:smoke
+
       - name: Build
         run: npm run build
 
