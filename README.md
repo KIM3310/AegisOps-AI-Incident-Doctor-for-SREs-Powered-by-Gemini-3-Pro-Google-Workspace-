@@ -1,15 +1,11 @@
-# AegisOps — Portfolio-Grade Multimodal SEV1 Incident Copilot
+# AegisOps — Multimodal Incident Review System
 
 ![CI](https://github.com/KIM3310/AegisOps/actions/workflows/ci.yml/badge.svg)
 
-In real SEV1 incidents, the hard part is rarely missing telemetry. The harder part is turning scattered evidence from logs,
+In real incidents, the hard part is rarely missing telemetry. The harder part is turning scattered evidence from logs,
 screenshots, and alerts into a report that someone else can review quickly.
 
-**AegisOps** compresses:
-
-`collect → reason → decide → communicate`
-
-into a single, reviewable incident report.
+**AegisOps** turns that evidence into a structured incident report, postmortem pack, and handoff path that stays easy to inspect.
 
 ## Reviewer quick paths
 
@@ -20,14 +16,14 @@ into a single, reviewable incident report.
 | `Full engineering verification` | `npm run verify` | typecheck, tests, replay proof, review-surface smoke, and build all pass |
 
 ## Portfolio posture
-- Review this repo like an operator cockpit that can switch runtime posture on purpose, not like a single always-live incident app.
-- The real story is screenshot/log intake -> replay proof -> incident handoff, with runtime mode made explicit the whole way through.
+- Review this repo like an operator console with explicit runtime modes, not like a single always-live incident app.
+- The core story is screenshot and log intake to replay proof to incident handoff, with runtime posture made explicit the whole way through.
 
 
 ## Role signals
 - **AI engineer:** multimodal evidence handling, grounding controls, and structured incident output are all first-class.
-- **Solution / cloud architect:** live/demo posture, reviewer routes, and operator-role boundaries are visible in the product surface.
-- **Field / solutions engineer:** the repo is easy to walk from screenshot + logs -> incident report -> reviewer bundle.
+- **Solutions architect:** live and demo posture, reviewer routes, and operator-role boundaries are visible in the product surface.
+- **Field / solutions engineer:** the repo is easy to walk from screenshot and logs to incident report to reviewer bundle.
 
 
 ## Portfolio context
