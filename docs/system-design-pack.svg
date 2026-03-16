@@ -1,0 +1,60 @@
+<svg width="1200" height="760" viewBox="0 0 1200 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="760" rx="24" fill="#07111A"/>
+  <rect x="36" y="32" width="1128" height="96" rx="18" fill="#0D1F2C" stroke="#2D4A5D"/>
+  <text x="64" y="76" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="700">AegisOps System Design Pack</text>
+  <text x="64" y="108" fill="#9FB7C8" font-family="Helvetica, Arial, sans-serif" font-size="18">Multimodal incident intake, runtime telemetry, replay quality, and commander handoff in one review surface.</text>
+
+  <rect x="48" y="160" width="220" height="164" rx="18" fill="#102331" stroke="#38566C"/>
+  <text x="72" y="198" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="24" font-weight="700">1. Operator UI</text>
+  <text x="72" y="232" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">Screenshots, logs, voice,</text>
+  <text x="72" y="254" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">and follow-up prompts stay</text>
+  <text x="72" y="276" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">in one operator-facing shell.</text>
+  <text x="72" y="307" fill="#8ED1C2" font-family="Helvetica, Arial, sans-serif" font-size="14">Guardrail: static demo and</text>
+  <text x="72" y="326" fill="#8ED1C2" font-family="Helvetica, Arial, sans-serif" font-size="14">backend stay separable.</text>
+
+  <rect x="322" y="160" width="238" height="164" rx="18" fill="#102331" stroke="#38566C"/>
+  <text x="346" y="198" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="24" font-weight="700">2. Incident API</text>
+  <text x="346" y="232" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">`/api/analyze`, `/api/followup`,</text>
+  <text x="346" y="254" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">and `/api/tts` preserve the</text>
+  <text x="346" y="276" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">same structured report contract.</text>
+  <text x="346" y="307" fill="#8ED1C2" font-family="Helvetica, Arial, sans-serif" font-size="14">Guardrail: protected routes +</text>
+  <text x="346" y="326" fill="#8ED1C2" font-family="Helvetica, Arial, sans-serif" font-size="14">payload limits.</text>
+
+  <rect x="614" y="160" width="250" height="164" rx="18" fill="#102331" stroke="#38566C"/>
+  <text x="638" y="198" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="24" font-weight="700">3. Runtime Telemetry</text>
+  <text x="638" y="232" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">Latency buckets, error posture,</text>
+  <text x="638" y="254" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">cache reuse, and live session</text>
+  <text x="638" y="276" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">history stay reviewer-visible.</text>
+  <text x="638" y="307" fill="#8ED1C2" font-family="Helvetica, Arial, sans-serif" font-size="14">Guardrail: `/api/runtime/scorecard`</text>
+  <text x="638" y="326" fill="#8ED1C2" font-family="Helvetica, Arial, sans-serif" font-size="14">must agree with the story.</text>
+
+  <rect x="918" y="160" width="234" height="164" rx="18" fill="#102331" stroke="#38566C"/>
+  <text x="942" y="198" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="24" font-weight="700">4. Replay Lane</text>
+  <text x="942" y="232" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">Rubric-based incident evals</text>
+  <text x="942" y="254" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">separate quality claims from</text>
+  <text x="942" y="276" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">provider-specific runtime noise.</text>
+  <text x="942" y="307" fill="#8ED1C2" font-family="Helvetica, Arial, sans-serif" font-size="14">Guardrail: replay failures block</text>
+  <text x="942" y="326" fill="#8ED1C2" font-family="Helvetica, Arial, sans-serif" font-size="14">clean escalation posture.</text>
+
+  <path d="M268 242H322" stroke="#6BC4B4" stroke-width="6" stroke-linecap="round"/>
+  <path d="M560 242H614" stroke="#6BC4B4" stroke-width="6" stroke-linecap="round"/>
+  <path d="M864 242H918" stroke="#6BC4B4" stroke-width="6" stroke-linecap="round"/>
+
+  <rect x="48" y="374" width="1104" height="146" rx="18" fill="#0C1C28" stroke="#2D4A5D"/>
+  <text x="76" y="414" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="700">Failure Drills</text>
+  <text x="76" y="447" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">Provider degradation -> inspect runtime scorecard + provider comparison before switching posture.</text>
+  <text x="76" y="473" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">Evidence gap during commander handoff -> route through postmortem pack + live session history.</text>
+  <text x="76" y="499" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">Auth boundary regression -> verify protected routes and required roles before allowing live operator mutation lanes.</text>
+
+  <rect x="48" y="556" width="520" height="156" rx="18" fill="#102331" stroke="#38566C"/>
+  <text x="76" y="596" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="700">Review Path</text>
+  <text x="76" y="628" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">1. `/api/system-design-pack`</text>
+  <text x="76" y="652" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">2. `/api/runtime/scorecard?focus=reliability`</text>
+  <text x="76" y="676" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">3. `/api/postmortem-pack` -> `/api/escalation-readiness`</text>
+
+  <rect x="608" y="556" width="544" height="156" rx="18" fill="#102331" stroke="#38566C"/>
+  <text x="636" y="596" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="700">What This Proves</text>
+  <text x="636" y="628" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">AegisOps is reviewable incident software, not just a chat wrapper over logs.</text>
+  <text x="636" y="652" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">Telemetry, replay quality, and handoff contract stay visible in the same operator story.</text>
+  <text x="636" y="676" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">The public claim is disciplined runtime design under bounded load, not hyperscale ops mythology.</text>
+</svg>

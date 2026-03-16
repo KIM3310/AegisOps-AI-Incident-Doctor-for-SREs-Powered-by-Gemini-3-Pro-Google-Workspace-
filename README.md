@@ -47,7 +47,7 @@ This repo is strongest for multimodal incident operations, runtime trust, and re
 | Team lens | What should stand out fast | Start here |
 |---|---|---|
 | Frontier / multimodal agents | screenshot + log intake, grounded follow-up, runtime posture switching, structured incident output | `GET /api/live-session-pack`, `GET /api/postmortem-pack`, `GET /api/review-pack`, [`docs/PORTFOLIO_PROOF_SURFACE.md`](docs/PORTFOLIO_PROOF_SURFACE.md) |
-| Big tech / SRE / platform | explicit deployment mode, provider comparison, replay evidence, runtime-to-handoff traceability | `GET /api/healthz`, `GET /api/postmortem-pack`, `GET /api/evals/providers`, `GET /api/schema/report` |
+| Big tech / SRE / platform | explicit deployment mode, provider comparison, replay evidence, runtime-to-handoff traceability, and reviewable system design posture | `GET /api/healthz`, `GET /api/system-design-pack`, `GET /api/postmortem-pack`, `GET /api/evals/providers`, `GET /api/schema/report` |
 | Palantir / high-trust ops | operator-ready session history, commander handoff, reviewable trust boundary, export posture | `GET /api/live-sessions`, `GET /api/live-session-pack`, `GET /api/postmortem-pack`, [`docs/solution-architecture.md`](docs/solution-architecture.md) |
 | Field / solutions engineer | fast buyer walkthrough from demo to review pack to architecture without hand-wavy claims | Cloudflare Pages demo, `GET /api/meta`, `GET /api/review-pack` |
 
@@ -77,6 +77,7 @@ Companion repo:
 - Session history API: `GET /api/live-sessions`, `GET /api/live-sessions/:sessionId`
 - Live session surface: `GET /api/live-session-pack`
 - Postmortem surface: `GET /api/postmortem-pack`
+- System design surface: `GET /api/system-design-pack`
 - Incident quality proof: replay suite with 4 scenarios / 32 rubric checks
 - Provider comparison surface: `GET /api/evals/providers`
 - Runtime posture: static demo, demo backend, Gemini live, Ollama local
@@ -86,19 +87,20 @@ Companion repo:
 
 - **Recruiter / hiring manager:** read [`docs/PORTFOLIO_PROOF_SURFACE.md`](docs/PORTFOLIO_PROOF_SURFACE.md), then open `GET /api/review-pack`.
 - **AI engineer:** open `GET /api/live-session-pack` -> `GET /api/postmortem-pack` -> `GET /api/evals/providers` -> `server/`.
-- **SRE / platform reviewer:** open `GET /api/healthz` -> `GET /api/postmortem-pack` -> `GET /api/live-sessions` -> `GET /api/schema/report`.
+- **SRE / platform reviewer:** open `GET /api/healthz` -> `GET /api/system-design-pack` -> `GET /api/postmortem-pack` -> `GET /api/live-sessions` -> `GET /api/schema/report`.
 - **Solutions / field reviewer:** open the Cloudflare Pages demo -> `GET /api/meta` -> [`docs/executive-one-pager.md`](docs/executive-one-pager.md).
 
 ## Review Flow
 
 1. `GET /api/healthz` -> confirm deployment mode and backend posture.
-2. `GET /api/live-session-pack` -> inspect realtime modality, operator roles, and live handoff routes.
-3. `GET /api/postmortem-pack` -> inspect evidence timeline, replay posture, and handoff contract in one surface.
-4. `GET /api/live-sessions` -> verify that live incident loops remain reviewable across multiple requests.
-5. `GET /api/review-pack` -> inspect replay proof, runtime modes, and trust boundary.
-6. `GET /api/evals/providers` -> compare demo/Gemini/Ollama tradeoffs before making runtime-quality or cost claims.
-7. `GET /api/schema/report` -> verify incident contract and export boundary.
-8. `docs/review-pack.svg` + `docs/architecture.png` -> read reviewer flow and key hygiene in one glance.
+2. `GET /api/system-design-pack` -> inspect topology, hot endpoints, and failure drills before describing big-tech runtime posture.
+3. `GET /api/live-session-pack` -> inspect realtime modality, operator roles, and live handoff routes.
+4. `GET /api/postmortem-pack` -> inspect evidence timeline, replay posture, and handoff contract in one surface.
+5. `GET /api/live-sessions` -> verify that live incident loops remain reviewable across multiple requests.
+6. `GET /api/review-pack` -> inspect replay proof, runtime modes, and trust boundary.
+7. `GET /api/evals/providers` -> compare demo/Gemini/Ollama tradeoffs before making runtime-quality or cost claims.
+8. `GET /api/schema/report` -> verify incident contract and export boundary.
+9. `docs/review-pack.svg` + `docs/system-design-pack.svg` + `docs/architecture.png` -> read reviewer flow and key hygiene in one glance.
 
 ![AegisOps Review Pack](docs/review-pack.svg)
 
