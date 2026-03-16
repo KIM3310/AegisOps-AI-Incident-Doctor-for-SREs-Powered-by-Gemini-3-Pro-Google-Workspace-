@@ -4,6 +4,11 @@
 
 Turn `AegisOps` into a true `multimodal incident operating system` proof. The hiring story should be: this repo takes messy incident evidence, preserves reviewability, and produces operator-ready handoff artifacts with measurable RCA quality.
 
+## Implemented Now
+
+- `GET /api/postmortem-pack` is live and ties live session evidence, runtime telemetry, replay posture, and report contract into one handoff surface.
+- Provider comparison and live session review now route naturally into the postmortem pack instead of stopping at raw replay or session views.
+
 ## 30 / 60 / 90
 
 ### 30 days
@@ -21,11 +26,14 @@ Turn `AegisOps` into a true `multimodal incident operating system` proof. The hi
 - Add confidence-band scoring that separates grounded evidence from speculative explanation.
 - Add one polished case study that walks from alert intake to export-safe postmortem bundle.
 
-## Proof Surfaces To Add
+## Proof Surfaces
 
+### Live now
+- `GET /api/postmortem-pack`
+
+### Next
 - `GET /api/evidence-timeline`
 - `GET /api/evals/rca-quality`
-- `GET /api/postmortem-pack`
 - `GET /api/runtime/provider-scorecard`
 
 ## Success Bar
