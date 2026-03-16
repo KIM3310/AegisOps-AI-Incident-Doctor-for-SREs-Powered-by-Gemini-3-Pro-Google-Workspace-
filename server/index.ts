@@ -154,7 +154,13 @@ function classifyEndpoint(path: string): RuntimeEndpointKey {
   if (path.startsWith("/api/followup")) return "followup";
   if (path.startsWith("/api/tts")) return "tts";
   if (path.startsWith("/api/evals/replays")) return "replay";
-  if (path.startsWith("/api/meta") || path.startsWith("/api/runtime/scorecard")) return "meta";
+  if (
+    path.startsWith("/api/meta") ||
+    path.startsWith("/api/runtime/scorecard") ||
+    path.startsWith("/api/system-design-pack")
+  ) {
+    return "meta";
+  }
   if (
     path.startsWith("/api/reviewer-bundle") ||
     path.startsWith("/api/review-pack") ||
@@ -432,6 +438,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       liveSessionPack: "/api/live-session-pack",
       postmortemPack: "/api/postmortem-pack",
       escalationReadiness: "/api/escalation-readiness",
+      systemDesignPack: "/api/system-design-pack",
       reviewPack: "/api/review-pack",
       providerComparison: "/api/evals/providers",
       replaySummary: "/api/evals/replays/summary",
@@ -553,6 +560,7 @@ function buildPostmortemPack() {
       liveSessionPack: "/api/live-session-pack",
       postmortemPack: "/api/postmortem-pack",
       escalationReadiness: "/api/escalation-readiness",
+      systemDesignPack: "/api/system-design-pack",
       reviewPack: "/api/review-pack",
       reviewerBundle: "/api/reviewer-bundle",
       runtimeScorecard: "/api/runtime/scorecard",
@@ -665,8 +673,146 @@ function buildEscalationReadiness() {
       liveSessionPack: "/api/live-session-pack",
       postmortemPack: "/api/postmortem-pack",
       escalationReadiness: "/api/escalation-readiness",
+      systemDesignPack: "/api/system-design-pack",
       reviewPack: "/api/review-pack",
       runtimeScorecard: "/api/runtime/scorecard",
+      providerComparison: "/api/evals/providers",
+      reportSchema: "/api/schema/report",
+    },
+  };
+}
+
+function buildSystemDesignPack() {
+  const runtimeScorecard = buildRuntimeScorecard("reliability");
+  const liveSessionPack = buildAegisOpsLiveSessionPack({
+    deployment: "backend",
+    maxImages: cfg.maxImages,
+    maxLogChars: cfg.maxLogChars,
+    maxQuestionChars: cfg.maxQuestionChars,
+    maxTtsChars: cfg.maxTtsChars,
+    analyzeModel: getAnalyzeModel(),
+    ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
+  });
+  const postmortemPack = buildPostmortemPack();
+  const providerComparison = buildAegisOpsProviderComparison({
+    deployment: "backend",
+    activeProvider: getActiveProvider(),
+    analyzeModel: getAnalyzeModel(),
+    ttsModel: getActiveProvider() === "ollama" ? "unsupported" : cfg.modelTts,
+    maxLogChars: cfg.maxLogChars,
+  });
+  const topEndpoints = runtimeScorecard.endpoints.slice(0, 4);
+
+  return {
+    ok: true,
+    service: "aegisops-system-design-pack",
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    systemDesignPackId: "aegisops-system-design-pack-v1",
+    headline:
+      "System-design pack that turns multimodal incident handling, runtime posture, and commander handoff into one big-tech review surface.",
+    summary: {
+      provider: runtimeScorecard.provider,
+      mode: runtimeScorecard.mode,
+      totalRequests: runtimeScorecard.summary.totalRequests,
+      totalSlowRequests: runtimeScorecard.summary.totalSlowRequests,
+      replayPassRate: runtimeScorecard.summary.replayPassRate,
+      liveSessionCount: runtimeScorecard.summary.liveSessionCount,
+      topologyNodeCount: 5,
+      drillCount: 4,
+    },
+    topology: [
+      {
+        node: "operator-ui",
+        responsibility: "Collect screenshots, logs, voice, and follow-up prompts without dropping incident context.",
+        guardrail: "Static demo and backend runtime stay separate so reviewer flow survives backend outages.",
+      },
+      {
+        node: "incident-analysis-api",
+        responsibility: "Turn multimodal evidence into a structured incident report through /api/analyze and /api/followup.",
+        guardrail: "Protected routes and payload limits keep live mutation lanes bounded.",
+      },
+      {
+        node: "runtime-telemetry",
+        responsibility: "Persist request telemetry, latency buckets, and recent error posture for reviewer triage.",
+        guardrail: "Scorecards expose slow/error posture before any production-readiness claim is repeated.",
+      },
+      {
+        node: "replay-quality-lane",
+        responsibility: "Keep rubric-based replay evals visible so incident quality can be checked independently of provider mode.",
+        guardrail: "Replay failures stay explicit and block clean escalation posture.",
+      },
+      {
+        node: "handoff-and-export",
+        responsibility: "Compress postmortem evidence, commander handoff, and report schema into export-safe surfaces.",
+        guardrail: "Escalation stays gated by evidence timeline, replay posture, and report contract.",
+      },
+    ],
+    trafficEnvelope: {
+      protectedRoutes: runtimeScorecard.operatorAuth.protectedRoutes,
+      hotEndpoints: topEndpoints.map((endpoint) => ({
+        endpoint: endpoint.endpoint,
+        requests: endpoint.requests,
+        averageMs: endpoint.averageMs,
+        slowRatePct: endpoint.slowRatePct,
+        errorRatePct: endpoint.errorRatePct,
+      })),
+      cache: {
+        enabled: runtimeScorecard.analyzeRuntime.cacheEnabled,
+        ttlSec: runtimeScorecard.analyzeRuntime.cacheTtlSec,
+        maxEntries: runtimeScorecard.analyzeRuntime.cacheMaxEntries,
+        hitRatePct: runtimeScorecard.summary.analyzeCacheHitRatePct,
+        sharedInflightReusePct: runtimeScorecard.summary.sharedInflightReusePct,
+      },
+      operatorRoles: liveSessionPack.sessionRoles.map((item) => item.role),
+    },
+    failureDrills: [
+      {
+        drill: "provider degradation",
+        trigger: "Slow requests or runtime errors climb during a live bridge.",
+        operatorAction: "Use runtime scorecard plus provider comparison before switching provider posture or falling back to bounded demo mode.",
+        reviewSurface: "/api/runtime/scorecard?focus=reliability",
+      },
+      {
+        drill: "evidence gap during commander handoff",
+        trigger: "Incident summary exists but screenshots, logs, or timeline evidence are incomplete.",
+        operatorAction: "Route through postmortem pack and live session history before escalation.",
+        reviewSurface: "/api/postmortem-pack",
+      },
+      {
+        drill: "auth or role boundary regression",
+        trigger: "Protected analyze/followup/tts routes are exposed without the expected operator session posture.",
+        operatorAction: "Verify operator-auth status before allowing live operator mutation routes.",
+        reviewSurface: "/api/runtime/scorecard",
+      },
+      {
+        drill: "quality claim outruns replay evidence",
+        trigger: "Runtime looks healthy but replay buckets still show failing cases.",
+        operatorAction: "Keep replay summary and escalation readiness in the same reviewer path.",
+        reviewSurface: "/api/escalation-readiness",
+      },
+    ],
+    reviewPath: [
+      "Start with /api/system-design-pack to explain the system in one pass before diving into implementation details.",
+      "Pair it with /api/runtime/scorecard?focus=reliability so topology claims stay grounded in live endpoint telemetry.",
+      "Use /api/postmortem-pack and /api/escalation-readiness to show how the design terminates in commander-safe handoff.",
+      "Finish on /api/review-pack and /api/schema/report so architecture and report contract stay aligned.",
+    ],
+    reviewerNotes: [
+      "This surface is for reviewable system design and operational drill posture, not a claim of hyperscale fleet traffic.",
+      "The strongest public proof is explicit failure handling, reviewer-visible telemetry, and handoff discipline under bounded load.",
+      "Use this pack together with replay and postmortem evidence before framing AegisOps as a big-tech-ready incident runtime.",
+    ],
+    links: {
+      healthz: "/api/healthz",
+      meta: "/api/meta",
+      runtimeScorecard: "/api/runtime/scorecard",
+      liveSessions: "/api/live-sessions",
+      liveSessionPack: "/api/live-session-pack",
+      postmortemPack: "/api/postmortem-pack",
+      escalationReadiness: "/api/escalation-readiness",
+      systemDesignPack: "/api/system-design-pack",
+      reviewPack: "/api/review-pack",
       providerComparison: "/api/evals/providers",
       reportSchema: "/api/schema/report",
     },
@@ -771,6 +917,7 @@ function buildReviewerBundle() {
       liveSessionPack: "/api/live-session-pack",
       postmortemPack: "/api/postmortem-pack",
       escalationReadiness: "/api/escalation-readiness",
+      systemDesignPack: "/api/system-design-pack",
       reviewPack: "/api/review-pack",
       reviewerBundle: "/api/reviewer-bundle",
       reviewerBundleVerify: "/api/reviewer-bundle/verify",
@@ -1002,6 +1149,7 @@ app.get("/api/auth/session", async (req, res) => {
         : null,
     links: {
       healthz: "/api/healthz",
+      systemDesignPack: "/api/system-design-pack",
       runtimeScorecard: "/api/runtime/scorecard",
     },
   });
@@ -1182,6 +1330,7 @@ app.get("/api/healthz", (req, res) => {
       liveSessions: "/api/live-sessions",
       liveSessionPack: "/api/live-session-pack",
       escalationReadiness: "/api/escalation-readiness",
+      systemDesignPack: "/api/system-design-pack",
       reviewPack: "/api/review-pack",
       replayEvals: "/api/evals/replays",
       replaySummary: "/api/evals/replays/summary",
@@ -1305,6 +1454,10 @@ app.get("/api/postmortem-pack", (req, res) => {
 
 app.get("/api/escalation-readiness", (req, res) => {
   res.json(buildEscalationReadiness());
+});
+
+app.get("/api/system-design-pack", (req, res) => {
+  res.json(buildSystemDesignPack());
 });
 
 app.get("/api/meta", (req, res) => {

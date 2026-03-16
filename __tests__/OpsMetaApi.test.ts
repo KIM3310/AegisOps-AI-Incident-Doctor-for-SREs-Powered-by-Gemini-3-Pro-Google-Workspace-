@@ -87,6 +87,7 @@ describe("service meta endpoints", () => {
     expect(body.links.liveSessionPack).toBe("/api/live-session-pack");
     expect(body.links.postmortemPack).toBe("/api/postmortem-pack");
     expect(body.links.escalationReadiness).toBe("/api/escalation-readiness");
+    expect(body.links.systemDesignPack).toBe("/api/system-design-pack");
     expect(body.links.reviewPack).toBe("/api/review-pack");
     expect(body.links.reviewerBundle).toBe("/api/reviewer-bundle");
     expect(body.links.reviewerBundleVerify).toBe("/api/reviewer-bundle/verify");
@@ -104,14 +105,16 @@ describe("service meta endpoints", () => {
     expect(body.reviewPackId).toBe("aegisops-review-pack-v1");
     expect(body.operatorJourney).toHaveLength(4);
     expect(body.trustBoundary.length).toBeGreaterThan(0);
-    expect(body.twoMinuteReview.length).toBe(4);
+    expect(body.twoMinuteReview.length).toBeGreaterThanOrEqual(5);
     expect(body.proofAssets.length).toBeGreaterThanOrEqual(4);
     expect(body.proofBundle.totalChecks).toBe(32);
     expect(body.proofBundle.liveSessionPackId).toBe("aegisops-live-session-pack-v1");
     expect(body.proofBundle.postmortemPackId).toBe("aegisops-postmortem-pack-v1");
+    expect(body.proofBundle.systemDesignPackId).toBe("aegisops-system-design-pack-v1");
     expect(body.proofBundle.replaySummaryId).toBe("incident-replay-summary-v1");
     expect(body.links.liveSessionPack).toBe("/api/live-session-pack");
     expect(body.links.postmortemPack).toBe("/api/postmortem-pack");
+    expect(body.links.systemDesignPack).toBe("/api/system-design-pack");
     expect(body.links.reviewPack).toBe("/api/review-pack");
   });
 
@@ -206,7 +209,32 @@ describe("service meta endpoints", () => {
     expect(body.confidenceBands).toHaveLength(3);
     expect(body.handoffContract.requiredEvidence).toContain("/api/postmortem-pack");
     expect(body.links.escalationReadiness).toBe("/api/escalation-readiness");
+    expect(body.links.systemDesignPack).toBe("/api/system-design-pack");
     expect(body.links.providerComparison).toBe("/api/evals/providers");
+  });
+
+  it("returns a system design pack for big-tech runtime review", async () => {
+    await fetch(`${baseUrl}/api/analyze`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ logs: "db connection pool saturation on checkout", images: [] }),
+    });
+
+    const res = await fetch(`${baseUrl}/api/system-design-pack`);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.service).toBe("aegisops-system-design-pack");
+    expect(body.systemDesignPackId).toBe("aegisops-system-design-pack-v1");
+    expect(body.summary.topologyNodeCount).toBeGreaterThanOrEqual(5);
+    expect(body.summary.drillCount).toBeGreaterThanOrEqual(4);
+    expect(Array.isArray(body.topology)).toBe(true);
+    expect(body.topology.some((item: { node: string }) => item.node === "runtime-telemetry")).toBe(true);
+    expect(Array.isArray(body.failureDrills)).toBe(true);
+    expect(body.failureDrills.some((item: { reviewSurface: string }) => item.reviewSurface === "/api/runtime/scorecard?focus=reliability")).toBe(true);
+    expect(body.links.systemDesignPack).toBe("/api/system-design-pack");
+    expect(body.links.postmortemPack).toBe("/api/postmortem-pack");
   });
 
   it("returns report schema guidance for operator-facing incident reports", async () => {
@@ -253,6 +281,7 @@ describe("service meta endpoints", () => {
     expect(body.operatorAuth.enabled).toBe(false);
     expect(body.replaySummary.summaryId).toBe("incident-replay-summary-v1");
     expect(body.links.runtimeScorecard).toBe("/api/runtime/scorecard");
+    expect(body.links.systemDesignPack).toBe("/api/system-design-pack");
     expect(Array.isArray(body.endpoints)).toBe(true);
     expect(Array.isArray(body.recommendations)).toBe(true);
   });
