@@ -24,7 +24,7 @@
   <text x="638" y="198" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="24" font-weight="700">3. Runtime Telemetry</text>
   <text x="638" y="232" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">Latency buckets, error posture,</text>
   <text x="638" y="254" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">cache reuse, and live session</text>
-  <text x="638" y="276" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">history stay reviewer-visible.</text>
+  <text x="638" y="276" fill="#D8E3EA" font-family="Helvetica, Arial, sans-serif" font-size="16">history stay visible.</text>
   <text x="638" y="307" fill="#8ED1C2" font-family="Helvetica, Arial, sans-serif" font-size="14">Guardrail: `/api/runtime/scorecard`</text>
   <text x="638" y="326" fill="#8ED1C2" font-family="Helvetica, Arial, sans-serif" font-size="14">must agree with the story.</text>
 

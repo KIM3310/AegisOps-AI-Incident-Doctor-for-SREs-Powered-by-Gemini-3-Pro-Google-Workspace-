@@ -150,7 +150,7 @@ export function buildAegisOpsProviderComparison(
       tradeoffs: [
         "Requires cloud key management",
         "Adds network latency and paid-token cost",
-        "Needs explicit reviewer trust boundary messaging",
+        "Needs explicit confidence boundary messaging",
       ],
       comparison: {
         qualityDelta: "Adds live multimodal capability on top of replay proof",
@@ -163,7 +163,7 @@ export function buildAegisOpsProviderComparison(
       label: "OpenAI live preview",
       isCurrent: currentProvider === "openai-review",
       qualitySignal:
-        "Bounded public reviewer lane using fixed incident bundles and compact escalation summaries.",
+        "Bounded public evaluation lane using fixed incident bundles and compact escalation summaries.",
       latencyBand: "network-dependent",
       costBand: "paid",
       capabilitySummary:

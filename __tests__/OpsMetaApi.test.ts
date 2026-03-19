@@ -90,9 +90,9 @@ describe("service meta endpoints", () => {
     expect(body.links.escalationReadiness).toBe("/api/escalation-readiness");
     expect(body.links.liveEscalationPreview).toBe("/api/live-escalation-preview");
     expect(body.links.systemDesignPack).toBe("/api/system-design-pack");
-    expect(body.links.reviewPack).toBe("/api/review-pack");
-    expect(body.links.reviewerBundle).toBe("/api/reviewer-bundle");
-    expect(body.links.reviewerBundleVerify).toBe("/api/reviewer-bundle/verify");
+    expect(body.links.summaryPack).toBe("/api/summary-pack");
+    expect(body.links.exportBundle).toBe("/api/export-bundle");
+    expect(body.links.exportBundleVerify).toBe("/api/export-bundle/verify");
     expect(body.links.runtimeScorecard).toBe("/api/runtime/scorecard");
     expect(body.links.replaySummary).toBe("/api/evals/replays/summary");
     expect(body.links.reportSchema).toBe("/api/schema/report");
@@ -100,47 +100,47 @@ describe("service meta endpoints", () => {
     expect(body.openai.publicLiveApi).toBe(true);
   });
 
-  it("returns a review pack that compresses flow, trust boundary, and proof links", async () => {
-    const res = await fetch(`${baseUrl}/api/review-pack`);
+  it("returns a summary pack that compresses flow, trust boundary, and proof links", async () => {
+    const res = await fetch(`${baseUrl}/api/summary-pack`);
     const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(body.ok).toBe(true);
-    expect(body.reviewPackId).toBe("aegisops-review-pack-v1");
+    expect(body.summaryPackId).toBe("aegisops-summary-pack-v1");
     expect(body.operatorJourney).toHaveLength(4);
     expect(body.trustBoundary.length).toBeGreaterThan(0);
     expect(body.twoMinuteReview.length).toBeGreaterThanOrEqual(5);
     expect(body.proofAssets.length).toBeGreaterThanOrEqual(4);
-    expect(body.proofBundle.totalChecks).toBe(32);
-    expect(body.proofBundle.liveSessionPackId).toBe("aegisops-live-session-pack-v1");
-    expect(body.proofBundle.postmortemPackId).toBe("aegisops-postmortem-pack-v1");
-    expect(body.proofBundle.systemDesignPackId).toBe("aegisops-system-design-pack-v1");
-    expect(body.proofBundle.replaySummaryId).toBe("incident-replay-summary-v1");
+    expect(body.evidenceBundle.totalChecks).toBe(32);
+    expect(body.evidenceBundle.liveSessionPackId).toBe("aegisops-live-session-pack-v1");
+    expect(body.evidenceBundle.postmortemPackId).toBe("aegisops-postmortem-pack-v1");
+    expect(body.evidenceBundle.systemDesignPackId).toBe("aegisops-system-design-pack-v1");
+    expect(body.evidenceBundle.replaySummaryId).toBe("incident-replay-summary-v1");
     expect(body.links.liveSessionPack).toBe("/api/live-session-pack");
     expect(body.links.postmortemPack).toBe("/api/postmortem-pack");
     expect(body.links.systemDesignPack).toBe("/api/system-design-pack");
-    expect(body.links.reviewPack).toBe("/api/review-pack");
+    expect(body.links.summaryPack).toBe("/api/summary-pack");
   });
 
-  it("returns a digest-backed reviewer bundle and verification surface", async () => {
-    const bundleRes = await fetch(`${baseUrl}/api/reviewer-bundle`);
+  it("returns a digest-backed export summary and verification surface", async () => {
+    const bundleRes = await fetch(`${baseUrl}/api/export-bundle`);
     const bundleBody = await bundleRes.json();
 
     expect(bundleRes.status).toBe(200);
     expect(bundleBody.ok).toBe(true);
-    expect(bundleBody.service).toBe("aegisops-reviewer-bundle");
-    expect(bundleBody.reviewerBundleId).toBe("aegisops-reviewer-bundle-v1");
+    expect(bundleBody.service).toBe("aegisops-export-bundle");
+    expect(bundleBody.exportBundleId).toBe("aegisops-export-bundle-v1");
     expect(bundleBody.integrity.algorithm).toBe("SHA-256");
     expect(bundleBody.integrity.digest).toHaveLength(64);
-    expect(bundleBody.links.reviewerBundleVerify).toBe("/api/reviewer-bundle/verify");
+    expect(bundleBody.links.exportBundleVerify).toBe("/api/export-bundle/verify");
 
     const verifyRes = await fetch(
-      `${baseUrl}/api/reviewer-bundle/verify?digest=${bundleBody.integrity.digest}`
+      `${baseUrl}/api/export-bundle/verify?digest=${bundleBody.integrity.digest}`
     );
     const verifyBody = await verifyRes.json();
 
     expect(verifyRes.status).toBe(200);
-    expect(verifyBody.service).toBe("aegisops-reviewer-bundle-verify");
+    expect(verifyBody.service).toBe("aegisops-export-bundle-verify");
     expect(verifyBody.match).toBe(true);
     expect(verifyBody.computedDigest).toBe(bundleBody.integrity.digest);
   });
@@ -183,7 +183,7 @@ describe("service meta endpoints", () => {
     expect(body.postmortemFlow).toHaveLength(4);
     expect(body.evidenceTimeline.some((item: { source: string }) => item.source === "live-session")).toBe(true);
     expect(body.evidenceTimeline.some((item: { source: string }) => item.source === "runtime-event")).toBe(true);
-    expect(body.proofBundle.replaySummaryId).toBe("incident-replay-summary-v1");
+    expect(body.evidenceBundle.replaySummaryId).toBe("incident-replay-summary-v1");
     expect(body.links.postmortemPack).toBe("/api/postmortem-pack");
     expect(body.links.escalationReadiness).toBe("/api/escalation-readiness");
     expect(body.links.runtimeScorecard).toBe("/api/runtime/scorecard");
@@ -290,7 +290,7 @@ describe("service meta endpoints", () => {
     expect(Array.isArray(body.recommendations)).toBe(true);
   });
 
-  it("returns a provider comparison surface for reviewer tradeoff decisions", async () => {
+  it("returns a provider comparison surface for operator tradeoff decisions", async () => {
     const res = await fetch(`${baseUrl}/api/evals/providers`);
     const body = await res.json();
 
@@ -338,8 +338,8 @@ describe("service meta endpoints", () => {
                       escalationStance: "page-incident-commander",
                       confidenceBand: "high",
                       handoffSummary:
-                        "Escalate now, but keep raw payment retry analysis in reviewer hands.",
-                      reviewerEvidence: [
+                        "Escalate now, but keep raw payment retry analysis with operators.",
+                      evaluationEvidence: [
                         "/api/postmortem-pack",
                         "/api/escalation-readiness",
                       ],
@@ -378,7 +378,7 @@ describe("service meta endpoints", () => {
     const previousToken = process.env.AEGISOPS_OPERATOR_TOKEN;
     const previousRoles = process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES;
     process.env.AEGISOPS_OPERATOR_TOKEN = "aegis-secret";
-    process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES = "incident-commander,reviewer";
+    process.env.AEGISOPS_OPERATOR_ALLOWED_ROLES = "incident-commander,operator";
 
     try {
       const denied = await fetch(`${baseUrl}/api/analyze`, {
@@ -412,7 +412,7 @@ describe("service meta endpoints", () => {
       expect(scorecard.status).toBe(200);
       expect(scorecardBody.operatorAuth.requiredRoles).toEqual([
         "incident-commander",
-        "reviewer",
+        "operator",
       ]);
       expect(scorecardBody.operatorAuth.roleHeaders).toContain("x-operator-role");
     } finally {

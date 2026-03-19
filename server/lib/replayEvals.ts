@@ -313,7 +313,7 @@ export function buildIncidentReplayEvalSummary(
     },
     topFailureBuckets: filteredBuckets.slice(0, limit),
     spotlightCases,
-    reviewerNotes: [
+    operatorNotes: [
       "Use failing buckets first to find the weakest incident reasoning categories.",
       "Spotlight cases keep the highest-friction failures visible for regression checks.",
       "Severity accuracy alone is not enough; failed category buckets still need review.",

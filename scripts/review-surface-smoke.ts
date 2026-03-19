@@ -54,19 +54,19 @@ async function main() {
   const baseUrl = `http://127.0.0.1:${address.port}`;
 
   try {
-    const [healthz, meta, reviewPack, liveSessionPack, schema, replaySummary, runtimeScorecard] =
+    const [healthz, meta, summaryPack, liveSessionPack, schema, replaySummary, runtimeScorecard] =
       await Promise.all([
         fetchJson(baseUrl, "/api/healthz"),
         fetchJson(baseUrl, "/api/meta"),
-        fetchJson(baseUrl, "/api/review-pack"),
+        fetchJson(baseUrl, "/api/summary-pack"),
         fetchJson(baseUrl, "/api/live-session-pack"),
         fetchJson(baseUrl, "/api/schema/report"),
         fetchJson(baseUrl, "/api/evals/replays/summary"),
         fetchJson(baseUrl, "/api/runtime/scorecard?focus=quality"),
       ]);
 
-    assert(meta?.links?.reviewPack === "/api/review-pack", "service meta review-pack link mismatch");
-    assert(reviewPack?.reviewPackId, "review pack id missing");
+    assert(meta?.links?.summaryPack === "/api/summary-pack", "service meta summary-pack link mismatch");
+    assert(summaryPack?.summaryPackId, "summary pack id missing");
     assert(liveSessionPack?.liveSessionPackId, "live session pack id missing");
     assert(schema?.schemaId === "incident-report-v1", "incident report schema id mismatch");
     assert(
@@ -74,8 +74,8 @@ async function main() {
       "incident report schema required fields are incomplete"
     );
     assert(
-      Array.isArray(reviewPack?.twoMinuteReview) && reviewPack.twoMinuteReview.length > 0,
-      "review pack two-minute review is missing"
+      Array.isArray(summaryPack?.twoMinuteReview) && summaryPack.twoMinuteReview.length > 0,
+      "summary pack two-minute review is missing"
     );
     assert(replaySummary?.summaryId === "incident-replay-summary-v1", "replay summary id mismatch");
     assert(runtimeScorecard?.summary, "runtime scorecard summary missing");
@@ -91,7 +91,7 @@ async function main() {
         provider: healthz?.provider ?? null,
       },
       proof: {
-        reviewPackId: reviewPack.reviewPackId,
+        summaryPackId: summaryPack.summaryPackId,
         liveSessionPackId: liveSessionPack.liveSessionPackId,
         schemaId: schema.schemaId,
         replaySummaryId: replaySummary.summaryId,
@@ -103,7 +103,7 @@ async function main() {
       },
       reviewRoutes: {
         healthz: meta?.links?.healthz ?? null,
-        reviewPack: meta?.links?.reviewPack ?? null,
+        summaryPack: meta?.links?.summaryPack ?? null,
         liveSessionPack: meta?.links?.liveSessionPack ?? null,
         runtimeScorecard: meta?.links?.runtimeScorecard ?? null,
         reportSchema: meta?.links?.reportSchema ?? null,

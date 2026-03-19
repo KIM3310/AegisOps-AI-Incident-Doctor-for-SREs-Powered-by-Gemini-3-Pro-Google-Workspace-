@@ -14,15 +14,15 @@ type ServiceMetaOptions = {
 };
 
 const REPORT_EXPORT_FORMATS: ExportFormat[] = ["json", "markdown", "slack", "jira"];
-const REVIEW_PACK_ID = "aegisops-review-pack-v1";
+const SUMMARY_PACK_ID = "aegisops-summary-pack-v1";
 const LIVE_SESSION_PACK_ID = "aegisops-live-session-pack-v1";
 const POSTMORTEM_PACK_ID = "aegisops-postmortem-pack-v1";
 
 function buildAegisOpsProofAssets() {
   return [
     {
-      label: "Review pack diagram",
-      path: "docs/review-pack.svg",
+      label: "Summary pack diagram",
+      path: "docs/summary-pack.svg",
       kind: "diagram",
     },
     {
@@ -174,7 +174,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
         id: "openai-live-preview",
         label: "OpenAI live preview",
         useWhen:
-          "Running the bounded public reviewer lane with fixed incident bundles and live escalation summaries.",
+          "Running the bounded public evaluation lane with fixed incident bundles and live escalation summaries.",
       },
     ],
     replaySuite: {
@@ -208,9 +208,9 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
       escalationReadiness: "/api/escalation-readiness",
       systemDesignPack: "/api/system-design-pack",
       liveEscalationPreview: "/api/live-escalation-preview",
-      reviewPack: "/api/review-pack",
-      reviewerBundle: "/api/reviewer-bundle",
-      reviewerBundleVerify: "/api/reviewer-bundle/verify",
+      summaryPack: "/api/summary-pack",
+      exportBundle: "/api/export-bundle",
+      exportBundleVerify: "/api/export-bundle/verify",
       runtimeScorecard: "/api/runtime/scorecard",
       replayEvals: "/api/evals/replays",
       replaySummary: "/api/evals/replays/summary",
@@ -245,7 +245,7 @@ export function buildAegisOpsLiveSessionPack(options: ServiceMetaOptions) {
         responsibility: "Attach screenshots, log snippets, and structured notes without losing evidence traceability.",
       },
       {
-        role: "reviewer",
+        role: "operator",
         responsibility: "Inspect replay proof, schema boundary, and export posture before handoff.",
       },
     ],
@@ -291,7 +291,7 @@ export function buildAegisOpsLiveSessionPack(options: ServiceMetaOptions) {
         "/api/live-session-pack",
         "/api/postmortem-pack",
         "/api/system-design-pack",
-        "/api/review-pack",
+        "/api/summary-pack",
         "/api/schema/report",
       ],
     },
@@ -312,17 +312,17 @@ export function buildAegisOpsLiveSessionPack(options: ServiceMetaOptions) {
   };
 }
 
-export function buildAegisOpsReviewPack(options: ServiceMetaOptions) {
+export function buildAegisOpsSummaryPack(options: ServiceMetaOptions) {
   const serviceMeta = buildAegisOpsServiceMeta(options);
   const replaySummary = buildIncidentReplayEvalSummary(options.maxLogChars);
   const reportSchema = buildIncidentReportSchema(options);
 
   return {
     ok: true,
-    service: "aegisops-review-pack",
+    service: "aegisops-summary-pack",
     version: 1,
     deployment: options.deployment,
-    reviewPackId: REVIEW_PACK_ID,
+    summaryPackId: SUMMARY_PACK_ID,
     headline:
       "SEV1 reviewers can verify runtime mode, replay quality, report contract, and export posture before trusting the copilot.",
     operatorJourney: [
@@ -365,7 +365,7 @@ export function buildAegisOpsReviewPack(options: ServiceMetaOptions) {
       },
       {
         step: "2. Replay quality",
-        surface: "/api/review-pack -> /api/postmortem-pack -> /api/evals/replays",
+        surface: "/api/summary-pack -> /api/postmortem-pack -> /api/evals/replays",
         proof: "Use pass rate, severity accuracy, and rubric count to judge incident-quality readiness.",
       },
       {
@@ -380,11 +380,11 @@ export function buildAegisOpsReviewPack(options: ServiceMetaOptions) {
       },
       {
         step: "5. Asset proof",
-        surface: "docs/review-pack.svg -> docs/system-design-pack.svg -> docs/architecture.png",
-        proof: "Verify reviewer flow and key hygiene without tracing the full codebase first.",
+        surface: "docs/summary-pack.svg -> docs/system-design-pack.svg -> docs/architecture.png",
+        proof: "Verify evaluation flow and key hygiene without tracing the full codebase first.",
       },
     ],
-    proofBundle: {
+    evidenceBundle: {
       replayPassRate: serviceMeta.replaySuite.passRate,
       severityAccuracy: serviceMeta.replaySuite.severityAccuracy,
       totalChecks: serviceMeta.replaySuite.totalChecks,

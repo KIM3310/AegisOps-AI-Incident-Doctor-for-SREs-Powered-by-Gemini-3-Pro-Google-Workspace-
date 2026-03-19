@@ -48,7 +48,7 @@ import {
 } from "./lib/sessionStore";
 import {
   buildAegisOpsLiveSessionPack,
-  buildAegisOpsReviewPack,
+  buildAegisOpsSummaryPack,
   buildAegisOpsServiceMeta,
   buildIncidentReportSchema,
 } from "./lib/serviceMeta";
@@ -166,7 +166,7 @@ const OPENAI_INCIDENT_BUNDLES: Record<string, OpenAiIncidentBundle> = {
     nextReviewPath: "/api/postmortem-pack",
     estimatedCostUsd: 0.012,
     prompt:
-      "Logs show checkout worker timeouts, rising 5xx rates, and command-bridge pressure. A screenshot highlights API latency, queue depth, and payment retries. Decide the escalation stance, human handoff boundary, and reviewer proof path.",
+      "Logs show checkout worker timeouts, rising 5xx rates, and command-bridge pressure. A screenshot highlights API latency, queue depth, and payment retries. Decide the escalation stance, human handoff boundary, and validation data path.",
   },
   "billing-degraded": {
     id: "billing-degraded",
@@ -211,8 +211,8 @@ function classifyEndpoint(path: string): RuntimeEndpointKey {
     return "meta";
   }
   if (
-    path.startsWith("/api/reviewer-bundle") ||
-    path.startsWith("/api/review-pack") ||
+    path.startsWith("/api/export-bundle") ||
+    path.startsWith("/api/summary-pack") ||
     path.startsWith("/api/postmortem-pack") ||
     path.startsWith("/api/live-session-pack") ||
     path.startsWith("/api/live-sessions") ||
@@ -482,7 +482,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
       postmortemPack: "/api/postmortem-pack",
       escalationReadiness: "/api/escalation-readiness",
       systemDesignPack: "/api/system-design-pack",
-      reviewPack: "/api/review-pack",
+      summaryPack: "/api/summary-pack",
       providerComparison: "/api/evals/providers",
       replaySummary: "/api/evals/replays/summary",
       reportSchema: "/api/schema/report",
@@ -493,7 +493,7 @@ function buildRuntimeScorecard(focus: RuntimeScorecardFocus) {
 }
 
 function buildPostmortemPack() {
-  const reviewPack = buildAegisOpsReviewPack({
+  const summaryPack = buildAegisOpsSummaryPack({
     deployment: "backend",
     maxImages: cfg.maxImages,
     maxLogChars: cfg.maxLogChars,
@@ -572,7 +572,7 @@ function buildPostmortemPack() {
       {
         stage: "Explain",
         surface: "/api/postmortem-pack",
-        proof: "Compress the evidence timeline, replay quality, and report schema into one reviewer bundle.",
+        proof: "Compress the evidence timeline, replay quality, and report schema into one export summary.",
       },
       {
         stage: "Handoff",
@@ -586,8 +586,8 @@ function buildPostmortemPack() {
       "Keep live-session evidence and runtime events together so the postmortem is traceable after the bridge ends.",
       "Validate required report fields before exporting to JSON, markdown, Slack, or Jira.",
     ],
-    proofBundle: {
-      reviewPackId: reviewPack.reviewPackId,
+    evidenceBundle: {
+      summaryPackId: summaryPack.summaryPackId,
       liveSessionPackId: liveSessionPack.liveSessionPackId,
       reportSchemaId: reportSchema.schemaId,
       replaySummaryId: runtimeScorecard.replaySummary.summaryId,
@@ -604,8 +604,8 @@ function buildPostmortemPack() {
       postmortemPack: "/api/postmortem-pack",
       escalationReadiness: "/api/escalation-readiness",
       systemDesignPack: "/api/system-design-pack",
-      reviewPack: "/api/review-pack",
-      reviewerBundle: "/api/reviewer-bundle",
+      summaryPack: "/api/summary-pack",
+      exportBundle: "/api/export-bundle",
       runtimeScorecard: "/api/runtime/scorecard",
       replaySummary: "/api/evals/replays/summary",
       reportSchema: "/api/schema/report",
@@ -678,7 +678,7 @@ function buildEscalationReadiness() {
       },
       {
         band: "moderate",
-        useWhen: "Runtime posture is acceptable, but a reviewer should still inspect replay failures or evidence gaps before escalation.",
+        useWhen: "Runtime posture is acceptable, but operators should still inspect replay failures or evidence gaps before escalation.",
       },
       {
         band: "bounded",
@@ -717,7 +717,7 @@ function buildEscalationReadiness() {
       postmortemPack: "/api/postmortem-pack",
       escalationReadiness: "/api/escalation-readiness",
       systemDesignPack: "/api/system-design-pack",
-      reviewPack: "/api/review-pack",
+      summaryPack: "/api/summary-pack",
       runtimeScorecard: "/api/runtime/scorecard",
       providerComparison: "/api/evals/providers",
       reportSchema: "/api/schema/report",
@@ -768,7 +768,7 @@ function buildSystemDesignPack() {
       {
         node: "operator-ui",
         responsibility: "Collect screenshots, logs, voice, and follow-up prompts without dropping incident context.",
-        guardrail: "Static demo and backend runtime stay separate so reviewer flow survives backend outages.",
+        guardrail: "Static demo and backend runtime stay separate so evaluation flow survives backend outages.",
       },
       {
         node: "incident-analysis-api",
@@ -777,7 +777,7 @@ function buildSystemDesignPack() {
       },
       {
         node: "runtime-telemetry",
-        responsibility: "Persist request telemetry, latency buckets, and recent error posture for reviewer triage.",
+        responsibility: "Persist request telemetry, latency buckets, and recent error posture for triage.",
         guardrail: "Scorecards expose slow/error posture before any production-readiness claim is repeated.",
       },
       {
@@ -831,7 +831,7 @@ function buildSystemDesignPack() {
       {
         drill: "quality claim outruns replay evidence",
         trigger: "Runtime looks healthy but replay buckets still show failing cases.",
-        operatorAction: "Keep replay summary and escalation readiness in the same reviewer path.",
+        operatorAction: "Keep replay summary and escalation readiness in the same evaluation path.",
         reviewSurface: "/api/escalation-readiness",
       },
     ],
@@ -839,11 +839,11 @@ function buildSystemDesignPack() {
       "Start with /api/system-design-pack to explain the system in one pass before diving into implementation details.",
       "Pair it with /api/runtime/scorecard?focus=reliability so topology claims stay grounded in live endpoint telemetry.",
       "Use /api/postmortem-pack and /api/escalation-readiness to show how the design terminates in commander-safe handoff.",
-      "Finish on /api/review-pack and /api/schema/report so architecture and report contract stay aligned.",
+      "Finish on /api/summary-pack and /api/schema/report so architecture and report contract stay aligned.",
     ],
-    reviewerNotes: [
+    operatorNotes: [
       "This surface is for reviewable system design and operational drill posture, not a claim of hyperscale fleet traffic.",
-      "The strongest public proof is explicit failure handling, reviewer-visible telemetry, and handoff discipline under bounded load.",
+      "The strongest public proof is explicit failure handling, visible telemetry, and handoff discipline under bounded load.",
       "Use this pack together with replay and postmortem evidence before framing AegisOps as a big-tech-ready incident runtime.",
     ],
     links: {
@@ -855,7 +855,7 @@ function buildSystemDesignPack() {
       postmortemPack: "/api/postmortem-pack",
       escalationReadiness: "/api/escalation-readiness",
       systemDesignPack: "/api/system-design-pack",
-      reviewPack: "/api/review-pack",
+      summaryPack: "/api/summary-pack",
       providerComparison: "/api/evals/providers",
       reportSchema: "/api/schema/report",
     },
@@ -880,7 +880,7 @@ function buildReviewerBundleDigest(payload: unknown) {
 }
 
 function buildReviewerBundle() {
-  const reviewPack = buildAegisOpsReviewPack({
+  const summaryPack = buildAegisOpsSummaryPack({
     deployment: "backend",
     maxImages: cfg.maxImages,
     maxLogChars: cfg.maxLogChars,
@@ -906,29 +906,29 @@ function buildReviewerBundle() {
     maxTtsChars: cfg.maxTtsChars,
   });
   const digestPayload = {
-    reviewPackId: reviewPack.reviewPackId,
+    summaryPackId: summaryPack.summaryPackId,
     liveSessionPackId: liveSessionPack.liveSessionPackId,
     reportSchemaId: reportSchema.schemaId,
     provider: runtimeScorecard.provider,
     focus: runtimeScorecard.focus,
     replaySummary: runtimeScorecard.replaySummary,
     operatorAuth: runtimeScorecard.operatorAuth,
-    reviewRoutes: reviewPack.links,
+    reviewRoutes: summaryPack.links,
   };
   const digest = buildReviewerBundleDigest(digestPayload);
 
   return {
     ok: true,
-    service: "aegisops-reviewer-bundle",
+    service: "aegisops-export-bundle",
     version: 1,
     generatedAt: new Date().toISOString(),
-    reviewerBundleId: "aegisops-reviewer-bundle-v1",
-    reviewPackId: reviewPack.reviewPackId,
+    exportBundleId: "aegisops-export-bundle-v1",
+    summaryPackId: summaryPack.summaryPackId,
     liveSessionPackId: liveSessionPack.liveSessionPackId,
     reportSchemaId: reportSchema.schemaId,
     provider: runtimeScorecard.provider,
     bundle: {
-      reviewPack,
+      summaryPack,
       liveSessionPack,
       runtimeScorecard: {
         service: runtimeScorecard.service,
@@ -946,13 +946,13 @@ function buildReviewerBundle() {
       algorithm: "SHA-256",
       digest,
       coveredSections: [
-        "reviewPack",
+        "summaryPack",
         "liveSessionPack",
         "runtimeScorecard.summary",
         "reportSchema",
         "operatorAuth",
       ],
-      verificationRoute: "/api/reviewer-bundle/verify",
+      verificationRoute: "/api/export-bundle/verify",
     },
     links: {
       healthz: "/api/healthz",
@@ -961,9 +961,9 @@ function buildReviewerBundle() {
       postmortemPack: "/api/postmortem-pack",
       escalationReadiness: "/api/escalation-readiness",
       systemDesignPack: "/api/system-design-pack",
-      reviewPack: "/api/review-pack",
-      reviewerBundle: "/api/reviewer-bundle",
-      reviewerBundleVerify: "/api/reviewer-bundle/verify",
+      summaryPack: "/api/summary-pack",
+      exportBundle: "/api/export-bundle",
+      exportBundleVerify: "/api/export-bundle/verify",
       runtimeScorecard: "/api/runtime/scorecard",
       reportSchema: "/api/schema/report",
     },
@@ -1210,7 +1210,7 @@ async function callOpenAiEscalationPreview(options: {
           {
             role: "system",
             content:
-              "You are a principal incident commander. Return compact JSON with keys escalationStance, confidenceBand, handoffSummary, reviewerEvidence, commanderMessage, nextAction.",
+              "You are a principal incident commander. Return compact JSON with keys escalationStance, confidenceBand, handoffSummary, evaluationEvidence, commanderMessage, nextAction.",
           },
           {
             role: "user",
@@ -1531,7 +1531,7 @@ app.get("/api/healthz", (req, res) => {
       escalationReadiness: "/api/escalation-readiness",
       liveEscalationPreview: "/api/live-escalation-preview",
       systemDesignPack: "/api/system-design-pack",
-      reviewPack: "/api/review-pack",
+      summaryPack: "/api/summary-pack",
       replayEvals: "/api/evals/replays",
       replaySummary: "/api/evals/replays/summary",
       providerComparison: "/api/evals/providers",
@@ -1751,9 +1751,9 @@ app.get("/api/meta", (req, res) => {
   );
 });
 
-app.get("/api/review-pack", (req, res) => {
+app.get("/api/summary-pack", (req, res) => {
   res.json(
-    buildAegisOpsReviewPack({
+    buildAegisOpsSummaryPack({
       deployment: "backend",
       maxImages: cfg.maxImages,
       maxLogChars: cfg.maxLogChars,
@@ -1765,19 +1765,19 @@ app.get("/api/review-pack", (req, res) => {
   );
 });
 
-app.get("/api/reviewer-bundle", (req, res) => {
+app.get("/api/export-bundle", (req, res) => {
   res.json(buildReviewerBundle());
 });
 
-app.get("/api/reviewer-bundle/verify", (req, res) => {
+app.get("/api/export-bundle/verify", (req, res) => {
   const providedDigest = String(req.query.digest || "").trim();
   const bundle = buildReviewerBundle();
   res.json({
     ok: true,
-    service: "aegisops-reviewer-bundle-verify",
+    service: "aegisops-export-bundle-verify",
     version: 1,
     generatedAt: new Date().toISOString(),
-    reviewerBundleId: bundle.reviewerBundleId,
+    exportBundleId: bundle.exportBundleId,
     providedDigest: providedDigest || null,
     computedDigest: bundle.integrity.digest,
     match: Boolean(providedDigest) && providedDigest === bundle.integrity.digest,

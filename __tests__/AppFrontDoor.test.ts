@@ -7,7 +7,7 @@ const {
   mockHealthz,
   mockReplayOverview,
   mockProviderComparison,
-  mockReviewPack,
+  mockSummaryPack,
   mockServiceMeta,
   mockReportSchema,
 } = vi.hoisted(() => ({
@@ -23,7 +23,7 @@ const {
     defaults: { grounding: false },
     models: { analyze: 'Recorded demo', tts: 'Unavailable' },
     links: {
-      reviewPack: '/api/review-pack',
+      summaryPack: '/api/summary-pack',
       replayEvals: '/api/evals/replays',
       providerComparison: '/api/evals/providers',
       meta: '/api/meta',
@@ -67,13 +67,13 @@ const {
       healthz: '/api/healthz',
     },
   },
-  mockReviewPack: {
+  mockSummaryPack: {
     ok: true,
     service: 'aegisops',
     version: 1,
     deployment: 'static-demo' as const,
-    reviewPackId: 'review-pack-v1',
-    headline: 'Replay-backed incident review pack.',
+    summaryPackId: 'summary-pack-v1',
+    headline: 'Replay-backed incident summary pack.',
     operatorJourney: [
       { stage: 'collect', summary: 'Load the strongest preset.', surface: '/demo' },
     ],
@@ -82,7 +82,7 @@ const {
     twoMinuteReview: [
       { step: 'Check replay proof', surface: '/api/evals/replays', proof: '100% pass' },
     ],
-    proofBundle: {
+    evidenceBundle: {
       replayPassRate: 100,
       severityAccuracy: 100,
       totalChecks: 32,
@@ -95,7 +95,7 @@ const {
     ],
     links: {
       healthz: '/api/healthz',
-      reviewPack: '/api/review-pack',
+      summaryPack: '/api/summary-pack',
       replayEvals: '/api/evals/replays',
       reportSchema: '/api/schema/report',
       readme: 'https://example.com/readme',
@@ -131,7 +131,7 @@ const {
     models: { analyze: 'Recorded demo', tts: 'Unavailable' },
     links: {
       healthz: '/api/healthz',
-      reviewPack: '/api/review-pack',
+      summaryPack: '/api/summary-pack',
       replayEvals: '/api/evals/replays',
       providerComparison: '/api/evals/providers',
       reportSchema: '/api/schema/report',
@@ -168,7 +168,7 @@ vi.mock('../services/geminiService', () => ({
     configured: false,
     persisted: false,
   }),
-  fetchReviewPack: vi.fn().mockResolvedValue(mockReviewPack),
+  fetchSummaryPack: vi.fn().mockResolvedValue(mockSummaryPack),
   fetchServiceMeta: vi.fn().mockResolvedValue(mockServiceMeta),
   fetchReportSchema: vi.fn().mockResolvedValue(mockReportSchema),
   saveGeminiApiKey: vi.fn(),
@@ -198,7 +198,7 @@ vi.mock('../components/CommunityHub', () => ({ CommunityHub: () => React.createE
 vi.mock('../components/ReplayEvalCard', () => ({ ReplayEvalCard: () => React.createElement('div', null, 'ReplayEvalCard') }));
 vi.mock('../components/OperatorReadinessCard', () => ({ OperatorReadinessCard: () => React.createElement('div', null, 'OperatorReadinessCard') }));
 vi.mock('../components/ProviderComparisonCard', () => ({ ProviderComparisonCard: () => React.createElement('div', null, 'ProviderComparisonCard') }));
-vi.mock('../components/ReviewPackCard', () => ({ ReviewPackCard: () => React.createElement('div', null, 'ReviewPackCard') }));
+vi.mock('../components/SummaryPackCard', () => ({ SummaryPackCard: () => React.createElement('div', null, 'SummaryPackCard') }));
 vi.mock('../components/Toast', () => ({
   ToastContainer: () => React.createElement('div'),
 }));
@@ -237,7 +237,7 @@ describe('App front door', () => {
     expect(source).toContain('Trim the log excerpt or load the strongest preset before you claim live-runtime readiness.');
   });
 
-  it('frames the first-click proof path without claiming live runtime evidence', async () => {
+  it('frames the first-click evidence path without claiming live runtime evidence', async () => {
     await act(async () => {
       root.render(React.createElement(App));
     });
@@ -262,15 +262,15 @@ describe('App front door', () => {
   });
 });
 
-describe('ReviewPackCard', () => {
+describe('SummaryPackCard', () => {
   it('shows fallback posture and next operator step for static-demo packs', async () => {
-    const { ReviewPackCard } = await vi.importActual<typeof import('../components/ReviewPackCard')>(
-      '../components/ReviewPackCard'
+    const { SummaryPackCard } = await vi.importActual<typeof import('../components/SummaryPackCard')>(
+      '../components/SummaryPackCard'
     );
-    const html = renderToStaticMarkup(React.createElement(ReviewPackCard, { reviewPack: mockReviewPack }));
+    const html = renderToStaticMarkup(React.createElement(SummaryPackCard, { summaryPack: mockSummaryPack }));
 
     expect(html).toContain('Fallback posture');
-    expect(html).toContain('Static demo keeps the reviewer path available');
+    expect(html).toContain('Static demo keeps the evaluation path available');
     expect(html).toContain('Next operator step');
   });
 });

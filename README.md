@@ -22,8 +22,8 @@ screenshots, and alerts into a report that someone else can review quickly.
 
 ## Role signals
 - **AI engineer:** multimodal evidence handling, grounding controls, and structured incident output are all first-class.
-- **Solutions architect:** live and demo posture, reviewer routes, and operator-role boundaries are visible in the product surface.
-- **Field / solutions engineer:** the repo is easy to walk from screenshot and logs to incident report to reviewer bundle.
+- **Solutions architect:** live and demo posture, data routes, and operator-role boundaries are visible in the product surface.
+- **Field / solutions engineer:** the repo is easy to walk from screenshot and logs to incident report to export summary.
 
 
 ## Portfolio context
@@ -42,10 +42,10 @@ This repo is strongest for multimodal incident operations, runtime trust, and re
 
 | Team lens | What should stand out fast | Start here |
 |---|---|---|
-| Frontier / multimodal agents | screenshot + log intake, grounded follow-up, runtime posture switching, structured incident output | `GET /api/live-session-pack`, `GET /api/postmortem-pack`, `GET /api/review-pack`, [`docs/PORTFOLIO_PROOF_SURFACE.md`](docs/PORTFOLIO_PROOF_SURFACE.md) |
+| Frontier / multimodal agents | screenshot + log intake, grounded follow-up, runtime posture switching, structured incident output | `GET /api/live-session-pack`, `GET /api/postmortem-pack`, `GET /api/summary-pack`, [`docs/PORTFOLIO_PROOF_SURFACE.md`](docs/PORTFOLIO_PROOF_SURFACE.md) |
 | Big tech / SRE / platform | explicit deployment mode, provider comparison, replay evidence, runtime-to-handoff traceability, and reviewable system design posture | `GET /api/healthz`, `GET /api/system-design-pack`, `GET /api/postmortem-pack`, `GET /api/evals/providers`, `GET /api/schema/report` |
 | High-trust ops workflows | operator-ready session history, commander handoff, reviewable trust boundary, export posture | `GET /api/live-sessions`, `GET /api/live-session-pack`, `GET /api/postmortem-pack`, [`docs/solution-architecture.md`](docs/solution-architecture.md) |
-| Field / solutions engineer | fast buyer walkthrough from demo to review pack to architecture without hand-wavy claims | Cloudflare Pages demo, `GET /api/meta`, `GET /api/review-pack` |
+| Field / solutions engineer | fast buyer walkthrough from demo to summary pack to architecture without hand-wavy claims | Cloudflare Pages demo, `GET /api/meta`, `GET /api/summary-pack` |
 
 ## Product Family
 
@@ -64,12 +64,12 @@ Companion repo:
 ## Runtime vs review/demo surfaces
 
 - Primary runtime: the React/Vite UI (`App.tsx`, `components/`, `hooks/`) plus the Express API in `server/` is the main incident workflow.
-- Review/demo surfaces: the Cloudflare Pages demo, `docs/`, and `samples/` are there so reviewers can inspect the incident flow without wiring live providers first.
+- Review/demo surfaces: the Cloudflare Pages demo, `docs/`, and `samples/` are there so operators can inspect the incident flow without wiring live providers first.
 - Repo map: root `*.tsx` files are the app shell, `scripts/` holds replay/load helpers, and `infra/` carries deployment material.
 
-## Review Pack At A Glance
+## Summary Pack At A Glance
 
-- Reviewer API surface: `GET /api/healthz`, `GET /api/meta`, `GET /api/review-pack`, `GET /api/schema/report`
+- Evaluation API surface: `GET /api/healthz`, `GET /api/meta`, `GET /api/summary-pack`, `GET /api/schema/report`
 - Bounded public live lane: `POST /api/live-escalation-preview`
 - Session history API: `GET /api/live-sessions`, `GET /api/live-sessions/:sessionId`
 - Live session surface: `GET /api/live-session-pack`
@@ -80,12 +80,12 @@ Companion repo:
 - Runtime posture: static demo, demo backend, live provider mode, Ollama local
 - Export posture: JSON, Markdown, Slack, Jira, plus optional Workspace flows
 
-## Reviewer Front Door
+## Quick Start
 
-- **Recruiter / hiring manager:** read [`docs/PORTFOLIO_PROOF_SURFACE.md`](docs/PORTFOLIO_PROOF_SURFACE.md), then open `GET /api/review-pack`.
+- **Recruiter / hiring manager:** read [`docs/PORTFOLIO_PROOF_SURFACE.md`](docs/PORTFOLIO_PROOF_SURFACE.md), then open `GET /api/summary-pack`.
 - **AI engineer:** open `GET /api/live-session-pack` -> `GET /api/postmortem-pack` -> `GET /api/evals/providers` -> `server/`.
-- **SRE / platform reviewer:** open `GET /api/healthz` -> `GET /api/system-design-pack` -> `GET /api/postmortem-pack` -> `GET /api/live-sessions` -> `GET /api/schema/report`.
-- **Solutions / field reviewer:** open the Cloudflare Pages demo -> `GET /api/meta` -> [`docs/executive-one-pager.md`](docs/executive-one-pager.md).
+- **SRE / platform engineer:** open `GET /api/healthz` -> `GET /api/system-design-pack` -> `GET /api/postmortem-pack` -> `GET /api/live-sessions` -> `GET /api/schema/report`.
+- **Solutions / field engineer:** open the Cloudflare Pages demo -> `GET /api/meta` -> [`docs/executive-one-pager.md`](docs/executive-one-pager.md).
 
 ## Review Flow
 
@@ -94,12 +94,12 @@ Companion repo:
 3. `GET /api/live-session-pack` -> inspect realtime modality, operator roles, and live handoff routes.
 4. `GET /api/postmortem-pack` -> inspect evidence timeline, replay posture, and handoff contract in one surface.
 5. `GET /api/live-sessions` -> verify that live incident loops remain reviewable across multiple requests.
-6. `GET /api/review-pack` -> inspect replay proof, runtime modes, and trust boundary.
+6. `GET /api/summary-pack` -> inspect replay proof, runtime modes, and trust boundary.
 7. `GET /api/evals/providers` -> compare demo/Gemini/Ollama tradeoffs before making runtime-quality or cost claims.
 8. `GET /api/schema/report` -> verify incident contract and export boundary.
-9. `docs/review-pack.svg` + `docs/system-design-pack.svg` + `docs/architecture.png` -> read reviewer flow and key hygiene in one glance.
+9. `docs/summary-pack.svg` + `docs/system-design-pack.svg` + `docs/architecture.png` -> read evaluation flow and key hygiene in one glance.
 
-![AegisOps Review Pack](docs/review-pack.svg)
+![AegisOps Summary Pack](docs/summary-pack.svg)
 
 ## Further Reading
 
@@ -136,7 +136,7 @@ This repo includes a small replay harness for incident analysis quality:
 
 - suite source: `evals/incidentReplays.ts`
 - scoring logic: `server/lib/replayEvals.ts`
-- reviewer script: `npm run eval:replays`
+- validation script: `npm run eval:replays`
 - API summary: `GET /api/evals/replays`
 
 The current suite covers 4 scenarios / 32 rubric checks. For the scoring rubric and case design, see
@@ -144,7 +144,7 @@ The current suite covers 4 scenarios / 32 rubric checks. For the scoring rubric 
 
 ## Service-Grade Surfaces
 
-AegisOps now exposes explicit review surfaces for operators and reviewers:
+AegisOps now exposes explicit review surfaces for operators and operators:
 
 - `GET /api/healthz`
   - current deployment mode, provider, limits, cache posture, and next action
@@ -155,9 +155,9 @@ AegisOps now exposes explicit review surfaces for operators and reviewers:
 - `GET /api/postmortem-pack`
   - evidence-first postmortem pack tying live session traces, runtime telemetry, replay posture, and export-safe handoff together
 - `GET /api/live-sessions`
-  - persisted incident session history with lane-aware summaries and detailed reviewer timelines
-- `GET /api/review-pack`
-  - operator journey, trust boundary, replay evidence, export posture, and reviewer links
+  - persisted incident session history with lane-aware summaries and detailed session timelines
+- `GET /api/summary-pack`
+  - operator journey, trust boundary, replay evidence, export posture, and documentation links
 - `GET /api/schema/report`
   - required incident-report fields, export formats, field guidance, and input guardrails
 
@@ -165,7 +165,7 @@ This is intentional: the repo should be reviewable as a service surface, not jus
 
 ## Supporting Files
 
-- `docs/review-pack.svg`
+- `docs/summary-pack.svg`
 - `docs/architecture.png`
 - `docs/live-session-pack.md`
 - `docs/INCIDENT_REPLAY_EVALS.md`

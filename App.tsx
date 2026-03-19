@@ -8,7 +8,7 @@ import {
   fetchProviderComparison,
   fetchReplayEvalOverview,
   fetchGeminiApiKeyStatus,
-  fetchReviewPack,
+  fetchSummaryPack,
   fetchServiceMeta,
   fetchReportSchema,
   saveGeminiApiKey,
@@ -16,7 +16,7 @@ import {
   type HealthzResponse,
   type ApiKeySource,
   type ProviderComparisonResponse,
-  type ReviewPackResponse,
+  type SummaryPackResponse,
   type ServiceMetaResponse,
   type ReportSchemaResponse,
 } from './services/geminiService';
@@ -36,7 +36,7 @@ import { CommunityHub } from './components/CommunityHub';
 import { ReplayEvalCard } from './components/ReplayEvalCard';
 import { OperatorReadinessCard } from './components/OperatorReadinessCard';
 import { ProviderComparisonCard } from './components/ProviderComparisonCard';
-import { ReviewPackCard } from './components/ReviewPackCard';
+import { SummaryPackCard } from './components/SummaryPackCard';
 import { ToastContainer, ToastMessage } from './components/Toast';
 import {
   buildReviewShareUrl,
@@ -92,18 +92,18 @@ const REVIEW_LENSES = {
   recruiter: {
     label: 'Recruiter',
     eyebrow: 'Recruiter lens',
-    headline: 'Show the strongest proof path without making the reviewer hunt.',
+    headline: 'Show the strongest evidence path without digging through code.',
     description:
-      'Lead with the strongest preset, confirm replay quality, then close with a compact reviewer bundle.',
+      'Lead with the strongest preset, confirm replay quality, then close with a compact export summary.',
     cards: [
       ['01 · Strongest preset', 'Start from a representative incident so the walkthrough lands fast.'],
       ['02 · Replay proof', 'Use pass rate and severity accuracy before talking about provider quality.'],
-      ['03 · Reviewer bundle', 'Send one compact handoff instead of narrating every panel live.'],
+      ['03 · Export summary', 'Send one compact handoff instead of narrating every panel live.'],
     ],
     actions: [
       { label: 'Load Strongest Preset', type: 'load-preset' },
       { label: 'Copy Review Checklist', type: 'checklist' },
-      { label: 'Copy Reviewer Bundle', type: 'bundle' },
+      { label: 'Copy Export Summary', type: 'bundle' },
     ],
   },
   commander: {
@@ -128,11 +128,11 @@ const REVIEW_LENSES = {
     eyebrow: 'Platform lens',
     headline: 'Frame the service as an operator-safe incident system, not just a demo.',
     description:
-      'Use this path when the reviewer is thinking about runtime posture, payload limits, and how the service scales beyond the preset.',
+      'Use this path when evaluating about runtime posture, payload limits, and how the service scales beyond the preset.',
     cards: [
       ['01 · Runtime posture', 'Anchor the conversation in deployment mode, provider state, and schema contract.'],
       ['02 · Payload budget', 'Show where logs and screenshots hit the safety limits before live runtime claims.'],
-      ['03 · Review link', 'Keep a shareable state link so the same proof path can be replayed later.'],
+      ['03 · Review link', 'Keep a shareable state link so the same evidence path can be replayed later.'],
     ],
     actions: [
       { label: 'Copy Payload Budget', type: 'payload' },
@@ -154,7 +154,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [apiHealth, setApiHealth] = useState<HealthzResponse | null>(null);
-  const [reviewPack, setReviewPack] = useState<ReviewPackResponse | null>(null);
+  const [summaryPack, setSummaryPack] = useState<SummaryPackResponse | null>(null);
   const [serviceMeta, setServiceMeta] = useState<ServiceMetaResponse | null>(null);
   const [reportSchema, setReportSchema] = useState<ReportSchemaResponse | null>(null);
   const [providerComparison, setProviderComparison] = useState<ProviderComparisonResponse | null>(null);
@@ -202,8 +202,8 @@ export default function App() {
   const imagesRef = useRef(images);
   const initialReviewStateRef = useRef(initialReviewUrlState);
   const appliedInitialReviewState = useRef(false);
-  const reviewRoutes = reviewPack
-    ? Object.entries(reviewPack.links).filter(([, href]) => typeof href === 'string' && href.length > 0)
+  const reviewRoutes = summaryPack
+    ? Object.entries(summaryPack.links).filter(([, href]) => typeof href === 'string' && href.length > 0)
     : [];
   const runtimePosture = apiHealth
     ? `${apiHealth.mode === 'live' ? 'Live backend' : 'Demo backend'} · ${(apiHealth.provider || 'unknown').toUpperCase()}`
@@ -263,8 +263,8 @@ export default function App() {
       ? 'Hold live-runtime claims until the conversation explicitly moves from replay proof into provider posture.'
       : apiHealth?.mode === 'live'
         ? 'Hold provider claims until one replay-backed incident and one live route both read cleanly.'
-        : 'Hold runtime claims until the incident proof path is concrete enough to survive handoff.',
-    exitWith: `${activeReviewLens.actions[activeReviewLens.actions.length - 1]?.label ?? 'Copy Reviewer Bundle'} once the ${activeReviewLens.label.toLowerCase()} framing reads clearly.`,
+        : 'Hold runtime claims until the incident evidence path is concrete enough to survive handoff.',
+    exitWith: `${activeReviewLens.actions[activeReviewLens.actions.length - 1]?.label ?? 'Copy Export Summary'} once the ${activeReviewLens.label.toLowerCase()} framing reads clearly.`,
   };
   
   useEffect(() => {
@@ -285,9 +285,9 @@ export default function App() {
     fetchServiceMeta()
       .then((meta) => { if (mounted) setServiceMeta(meta); })
       .catch(() => { if (mounted) setServiceMeta(null); });
-    fetchReviewPack()
-      .then((pack) => { if (mounted) setReviewPack(pack); })
-      .catch(() => { if (mounted) setReviewPack(null); });
+    fetchSummaryPack()
+      .then((pack) => { if (mounted) setSummaryPack(pack); })
+      .catch(() => { if (mounted) setSummaryPack(null); });
     fetchReportSchema()
       .then((schema) => { if (mounted) setReportSchema(schema); })
       .catch(() => { if (mounted) setReportSchema(null); });
@@ -625,16 +625,16 @@ export default function App() {
 
   const copyReviewChecklist = async () => {
     const lines = [
-      'AegisOps reviewer checklist',
+      'AegisOps export checklist',
       `Runtime: ${runtimePosture}`,
-      `Deployment: ${apiHealth?.deployment ?? reviewPack?.deployment ?? 'unknown'}`,
+      `Deployment: ${apiHealth?.deployment ?? summaryPack?.deployment ?? 'unknown'}`,
       `Report schema: ${reportSchema?.schemaId ?? 'unavailable'}`,
-      `Replay pass rate: ${reviewPack ? `${reviewPack.proofBundle.replayPassRate}%` : 'unavailable'}`,
-      `Severity accuracy: ${reviewPack ? `${reviewPack.proofBundle.severityAccuracy}%` : 'unavailable'}`,
+      `Replay pass rate: ${summaryPack ? `${summaryPack.evidenceBundle.replayPassRate}%` : 'unavailable'}`,
+      `Severity accuracy: ${summaryPack ? `${summaryPack.evidenceBundle.severityAccuracy}%` : 'unavailable'}`,
       '',
       'Review flow',
-      ...(reviewPack?.twoMinuteReview?.map((item) => `- ${item.step}: ${item.surface} (${item.proof})`) ?? [
-        '- Review pack unavailable. Start with /api/healthz, /api/review-pack, and replay evals.',
+      ...(summaryPack?.twoMinuteReview?.map((item) => `- ${item.step}: ${item.surface} (${item.proof})`) ?? [
+        '- Summary pack unavailable. Start with /api/healthz, /api/summary-pack, and replay evals.',
       ]),
       '',
       'Fast links',
@@ -643,7 +643,7 @@ export default function App() {
         : ['- Review routes unavailable.']),
     ];
 
-    await copyLinesToClipboard(lines, 'Reviewer checklist copied');
+    await copyLinesToClipboard(lines, 'Export checklist copied');
   };
 
   const copyReviewRoutes = async () => {
@@ -651,7 +651,7 @@ export default function App() {
       'AegisOps fast review routes',
       ...(reviewRoutes.length > 0
         ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
-        : ['- Review routes unavailable. Start with /api/healthz, /api/meta, and /api/review-pack.']),
+        : ['- Review routes unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
     ];
 
     await copyLinesToClipboard(lines, 'Review routes copied');
@@ -673,9 +673,9 @@ export default function App() {
 
   const copyReviewerBundle = async () => {
     const lines = [
-      'AegisOps reviewer bundle',
+      'AegisOps export summary',
       `Runtime: ${runtimePosture}`,
-      `Deployment: ${apiHealth?.deployment ?? reviewPack?.deployment ?? 'unknown'}`,
+      `Deployment: ${apiHealth?.deployment ?? summaryPack?.deployment ?? 'unknown'}`,
       `Schema: ${reportSchema?.schemaId ?? 'unavailable'}`,
       '',
       'Current review state',
@@ -687,27 +687,27 @@ export default function App() {
         : ['- Review routes unavailable.']),
       '',
       'Proof assets',
-      ...(reviewPack?.proofAssets?.length
-        ? reviewPack.proofAssets.map((item) => `- ${item.label} [${item.kind}]: ${item.path}`)
+      ...(summaryPack?.proofAssets?.length
+        ? summaryPack.proofAssets.map((item) => `- ${item.label} [${item.kind}]: ${item.path}`)
         : ['- Proof assets unavailable.']),
     ];
 
-    await copyLinesToClipboard(lines, 'Reviewer bundle copied');
+    await copyLinesToClipboard(lines, 'Export summary copied');
   };
 
   const copyEvidenceSnapshot = async () => {
     const lines = [
       'AegisOps evidence snapshot',
-      `Replay pass rate: ${reviewPack ? `${reviewPack.proofBundle.replayPassRate}%` : 'unavailable'}`,
-      `Severity accuracy: ${reviewPack ? `${reviewPack.proofBundle.severityAccuracy}%` : 'unavailable'}`,
-      `Rubric checks: ${reviewPack?.proofBundle.totalChecks ?? 'unavailable'}`,
-      `Runtime modes: ${reviewPack?.proofBundle.runtimeModes?.join(', ') ?? 'unavailable'}`,
-      `Export formats: ${reviewPack?.proofBundle.exportFormats?.join(', ') ?? 'unavailable'}`,
+      `Replay pass rate: ${summaryPack ? `${summaryPack.evidenceBundle.replayPassRate}%` : 'unavailable'}`,
+      `Severity accuracy: ${summaryPack ? `${summaryPack.evidenceBundle.severityAccuracy}%` : 'unavailable'}`,
+      `Rubric checks: ${summaryPack?.evidenceBundle.totalChecks ?? 'unavailable'}`,
+      `Runtime modes: ${summaryPack?.evidenceBundle.runtimeModes?.join(', ') ?? 'unavailable'}`,
+      `Export formats: ${summaryPack?.evidenceBundle.exportFormats?.join(', ') ?? 'unavailable'}`,
       '',
       'Supporting assets',
-      ...(reviewPack?.proofAssets?.length
-        ? reviewPack.proofAssets.map((item) => `- ${item.label} [${item.kind}]: ${item.path}`)
-        : ['- Supporting assets unavailable. Open /api/review-pack first.']),
+      ...(summaryPack?.proofAssets?.length
+        ? summaryPack.proofAssets.map((item) => `- ${item.label} [${item.kind}]: ${item.path}`)
+        : ['- Supporting assets unavailable. Open /api/summary-pack first.']),
     ];
 
     await copyLinesToClipboard(lines, 'Evidence snapshot copied');
@@ -750,7 +750,7 @@ export default function App() {
       'Fast links',
       ...(reviewRoutes.length > 0
         ? reviewRoutes.map(([label, href]) => `- ${label}: ${href}`)
-        : ['- Review routes unavailable. Start with /api/healthz, /api/meta, and /api/review-pack.']),
+        : ['- Review routes unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
       '',
       'Log excerpt',
       strongestPreset.logs,
@@ -760,14 +760,14 @@ export default function App() {
   };
 
   const copyIncidentClaim = async () => {
-    const strongestJourney = reviewPack?.operatorJourney?.[0];
+    const strongestJourney = summaryPack?.operatorJourney?.[0];
     const lines = [
       'AegisOps incident claim snapshot',
-      `Headline: ${reviewPack?.headline ?? 'review pack unavailable'}`,
+      `Headline: ${summaryPack?.headline ?? 'summary pack unavailable'}`,
       `Runtime: ${runtimePosture}`,
-      `Deployment: ${apiHealth?.deployment ?? reviewPack?.deployment ?? 'unknown'}`,
-      `Replay pass rate: ${reviewPack ? `${reviewPack.proofBundle.replayPassRate}%` : 'unavailable'}`,
-      `Severity accuracy: ${reviewPack ? `${reviewPack.proofBundle.severityAccuracy}%` : 'unavailable'}`,
+      `Deployment: ${apiHealth?.deployment ?? summaryPack?.deployment ?? 'unknown'}`,
+      `Replay pass rate: ${summaryPack ? `${summaryPack.evidenceBundle.replayPassRate}%` : 'unavailable'}`,
+      `Severity accuracy: ${summaryPack ? `${summaryPack.evidenceBundle.severityAccuracy}%` : 'unavailable'}`,
       `Schema: ${reportSchema?.schemaId ?? 'unavailable'}`,
       `Preset: ${strongestPreset?.name ?? 'unavailable'}`,
       '',
@@ -777,8 +777,8 @@ export default function App() {
         : '- Operator journey unavailable.',
       '',
       'Export posture',
-      `- Formats: ${reviewPack?.proofBundle.exportFormats?.join(', ') ?? 'unavailable'}`,
-      `- Runtime modes: ${reviewPack?.proofBundle.runtimeModes?.join(', ') ?? 'unavailable'}`,
+      `- Formats: ${summaryPack?.evidenceBundle.exportFormats?.join(', ') ?? 'unavailable'}`,
+      `- Runtime modes: ${summaryPack?.evidenceBundle.runtimeModes?.join(', ') ?? 'unavailable'}`,
     ];
 
     await copyLinesToClipboard(lines, 'Incident claim copied');
@@ -794,7 +794,7 @@ export default function App() {
         history: showHistory,
       })
     );
-    const strongestJourney = reviewPack?.operatorJourney?.[0];
+    const strongestJourney = summaryPack?.operatorJourney?.[0];
     const topActions =
       report?.actionItems?.slice(0, 3).map((item, index) => {
         const ownerText = item.owner ? ` · ${item.owner}` : '';
@@ -805,7 +805,7 @@ export default function App() {
     const lines = [
       'AegisOps escalation brief',
       `Runtime: ${runtimePosture}`,
-      `Deployment: ${apiHealth?.deployment ?? reviewPack?.deployment ?? 'unknown'}`,
+      `Deployment: ${apiHealth?.deployment ?? summaryPack?.deployment ?? 'unknown'}`,
       `Incident: ${report?.title ?? 'not analyzed yet'}`,
       `Severity: ${report?.severity ?? 'unavailable'}`,
       `Summary: ${report?.summary ?? 'Load a preset or analyze logs/screenshots before escalating.'}`,
@@ -823,7 +823,7 @@ export default function App() {
       'Reviewer context',
       ...(strongestJourney
         ? [`- ${strongestJourney.surface}: ${strongestJourney.summary}`]
-        : ['- Review pack unavailable. Start with /api/healthz, /api/meta, and /api/review-pack.']),
+        : ['- Summary pack unavailable. Start with /api/healthz, /api/meta, and /api/summary-pack.']),
       ...reviewRoutes.slice(0, 4).map(([label, href]) => `- ${label}: ${href}`),
       '',
       `Share link: ${shareUrl}`,
@@ -1132,7 +1132,7 @@ export default function App() {
     images.length,
     logs,
     reportSchema?.schemaId,
-    reviewPack,
+    summaryPack,
     reviewRoutes,
     reviewStateChips,
     runtimePosture,
@@ -1254,7 +1254,7 @@ export default function App() {
                       <Sparkles className="w-4 h-4 text-accent animate-pulse" />
                     </h1>
                     <p className="text-sm text-text-muted max-w-2xl leading-6">
-                      Start with a replay-backed incident claim, show exactly what is proven in this build, then use provider posture and reviewer handoff tools to guide the next conversation.
+                      Start with a replay-backed incident claim, show exactly what is proven in this build, then use provider posture and escalation tools to guide the next conversation.
                     </p>
                   </div>
 
@@ -1414,7 +1414,7 @@ export default function App() {
               error={providerComparisonError}
             />
 
-            <ReviewPackCard reviewPack={reviewPack} />
+            <SummaryPackCard summaryPack={summaryPack} />
 
             <OperatorReadinessCard
               health={apiHealth}
@@ -1438,7 +1438,7 @@ export default function App() {
                 <div className="space-y-1">
                   <div className="text-xs font-semibold flex items-center gap-1.5">
                     <FileText className="w-3.5 h-3.5 text-accent" />
-                    Reviewer Flight Deck
+                    Operator Dashboard
                   </div>
                   <p className="text-2xs text-text-muted max-w-2xl">
                     입력 전에 runtime posture, review flow, fast links, preset repro path를 한 번에 정리합니다.
@@ -1493,7 +1493,7 @@ export default function App() {
                   onClick={copyReviewerBundle}
                   className="h-8 px-3 rounded-md border border-border bg-bg hover:bg-bg-hover text-xs text-text-muted hover:text-text"
                 >
-                  Copy Reviewer Bundle
+                  Copy Export Summary
                 </button>
                 <button
                   onClick={copyPayloadBudgetSnapshot}
@@ -1534,8 +1534,8 @@ export default function App() {
                 <div className="rounded-lg border border-border bg-bg/80 p-3 space-y-2">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">Review flow</div>
                   <div className="space-y-2">
-                    {(reviewPack?.twoMinuteReview?.length ? reviewPack.twoMinuteReview : [
-                      { step: 'Load review pack', surface: '/api/review-pack', proof: 'review route unavailable' },
+                    {(summaryPack?.twoMinuteReview?.length ? summaryPack.twoMinuteReview : [
+                      { step: 'Load summary pack', surface: '/api/summary-pack', proof: 'review route unavailable' },
                     ]).map((item) => (
                       <div key={`${item.step}-${item.surface}`} className="rounded-md border border-border bg-bg-card/70 px-3 py-2">
                         <div className="text-xs font-medium text-text">{item.step}</div>
@@ -1566,7 +1566,7 @@ export default function App() {
                     )}
                   </div>
                   <div className="text-2xs text-text-muted">
-                    Presets stay in the same deck so reviewers can reproduce a strong run without hunting through the page.
+                    Presets stay in the same deck so operators can reproduce a strong run without hunting through the page.
                   </div>
                 </div>
               </div>

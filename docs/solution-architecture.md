@@ -8,12 +8,12 @@ AegisOps turns multimodal incident evidence into a reviewable incident report wi
 
 - `React/Vite UI`
   - collects screenshots, logs, and operator context
-  - renders runtime posture, review pack, and replay proof
+  - renders runtime posture, summary pack, and replay proof
 - `Express API`
   - validates payloads
   - owns model keys
   - normalizes report output
-  - exposes reviewer surfaces
+  - exposes dashboards
 - `Model runtime`
   - Gemini live mode
   - Ollama local mode
@@ -33,14 +33,14 @@ flowchart LR
   API --> Provider[Gemini or Ollama]
   API --> Eval[Replay Eval Summary]
   API --> Export[Slack Jira Workspace Exports]
-  API --> Meta[Health Meta Review Pack Schema]
+  API --> Meta[Health Meta Summary Pack Schema]
 ```
 
 ## Reliability posture
 
 - Browser never owns the Gemini API key.
 - Review surfaces are available even when the live model is unavailable.
-- Replay evals provide a deterministic quality floor before a reviewer trusts the live path.
+- Replay evals provide a deterministic quality floor before a confidences the live path.
 - Report schema is explicit, so downstream exports do not depend on loose model formatting.
 
 ## Security and trust boundary
@@ -53,7 +53,7 @@ flowchart LR
 ## Reviewer flow
 
 1. Open `/api/healthz` to confirm runtime mode.
-2. Open `/api/review-pack` to inspect replay proof and trust boundary.
+2. Open `/api/summary-pack` to inspect replay proof and trust boundary.
 3. Open `/api/schema/report` to verify the contract.
 4. Run one incident path through analyze -> export -> follow-up.
 

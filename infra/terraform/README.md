@@ -37,6 +37,6 @@ terraform apply \
 ## Notes
 
 - Use `env` for non-secret config and `secret_env` for Secret Manager-backed values.
-- When `allow_unauthenticated=false`, add explicit `invoker_members` for reviewers or platform groups.
+- When `allow_unauthenticated=false`, add explicit `invoker_members` for operators or platform groups.
 - The runtime identity gets `roles/secretmanager.secretAccessor` on referenced secrets automatically.
 - Container probes default to `/api/healthz`.

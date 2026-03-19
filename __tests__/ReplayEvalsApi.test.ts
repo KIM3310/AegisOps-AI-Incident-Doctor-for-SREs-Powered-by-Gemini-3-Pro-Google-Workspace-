@@ -38,7 +38,7 @@ describe("GET /api/evals/replays", () => {
     expect(Array.isArray(body.cases)).toBe(true);
   });
 
-  it("returns a filtered replay summary surface for reviewer triage", async () => {
+  it("returns a filtered replay summary surface for triage", async () => {
     const res = await fetch(`${baseUrl}/api/evals/replays/summary?status=pass&limit=2`);
     const body = await res.json();
 

@@ -1,41 +1,41 @@
 import React from "react";
 import { ExternalLink, FileText, Gauge, ListChecks, Shield } from "lucide-react";
-import type { ReviewPackResponse } from "../services/geminiService";
+import type { SummaryPackResponse } from "../services/geminiService";
 
 interface Props {
-  reviewPack: ReviewPackResponse | null;
+  summaryPack: SummaryPackResponse | null;
 }
 
 function isExternalLink(value: string): boolean {
   return /^https?:\/\//i.test(value);
 }
 
-export const ReviewPackCard: React.FC<Props> = ({ reviewPack }) => {
-  if (!reviewPack) {
+export const SummaryPackCard: React.FC<Props> = ({ summaryPack }) => {
+  if (!summaryPack) {
     return null;
   }
 
-  const twoMinuteReview = Array.isArray(reviewPack.twoMinuteReview) ? reviewPack.twoMinuteReview : [];
-  const proofAssets = Array.isArray(reviewPack.proofAssets) ? reviewPack.proofAssets : [];
+  const twoMinuteReview = Array.isArray(summaryPack.twoMinuteReview) ? summaryPack.twoMinuteReview : [];
+  const proofAssets = Array.isArray(summaryPack.proofAssets) ? summaryPack.proofAssets : [];
   const fallbackPosture =
-    reviewPack.deployment === "static-demo"
-      ? "Static demo keeps the reviewer path available while backend-only runtime controls stay out of scope."
+    summaryPack.deployment === "static-demo"
+      ? "Static demo keeps the evaluation path available while backend-only runtime controls stay out of scope."
       : "Backend runtime is available, so move from replay proof into live scorecard and export checks before handoff.";
   const nextOperatorStep =
-    reviewPack.deployment === "static-demo"
+    summaryPack.deployment === "static-demo"
       ? "Start with replay proof, then explain what changes when the local API is enabled."
       : "Open the runtime scorecard after replay proof so the handoff stays grounded in live posture.";
 
   const reviewLinks = [
-    { label: "Demo", href: reviewPack.links.demo },
-    { label: "Video", href: reviewPack.links.video },
-    { label: "README", href: reviewPack.links.readme },
+    { label: "Demo", href: summaryPack.links.demo },
+    { label: "Video", href: summaryPack.links.video },
+    { label: "README", href: summaryPack.links.readme },
   ];
   const apiSurfaces = [
-    reviewPack.links.healthz,
-    reviewPack.links.reviewPack,
-    reviewPack.links.replayEvals,
-    reviewPack.links.reportSchema,
+    summaryPack.links.healthz,
+    summaryPack.links.summaryPack,
+    summaryPack.links.replayEvals,
+    summaryPack.links.reportSchema,
   ];
 
   return (
@@ -44,24 +44,24 @@ export const ReviewPackCard: React.FC<Props> = ({ reviewPack }) => {
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-text">
             <FileText className="w-4 h-4 text-accent" />
-            Executive Review Pack
+            Executive Summary Pack
           </div>
           <div className="mt-2 text-sm font-medium text-text max-w-2xl">
-            {reviewPack.headline}
+            {summaryPack.headline}
           </div>
         </div>
         <div className="flex flex-wrap gap-2 text-[10px]">
           <span className="px-2 py-1 rounded-full border border-border bg-bg">
-            {reviewPack.reviewPackId}
+            {summaryPack.summaryPackId}
           </span>
           <span className="px-2 py-1 rounded-full border border-border bg-bg">
-            {reviewPack.deployment === "static-demo" ? "STATIC DEMO" : "BACKEND"}
+            {summaryPack.deployment === "static-demo" ? "STATIC DEMO" : "BACKEND"}
           </span>
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
-        {reviewPack.operatorJourney.map((item) => (
+        {summaryPack.operatorJourney.map((item) => (
           <div key={item.stage} className="rounded-lg border border-border bg-bg/70 p-3">
             <div className="text-[11px] uppercase tracking-[0.18em] text-text-dim">{item.stage}</div>
             <div className="mt-2 text-sm font-medium text-text">{item.summary}</div>
@@ -74,20 +74,20 @@ export const ReviewPackCard: React.FC<Props> = ({ reviewPack }) => {
         <div className="rounded-lg border border-border bg-bg/70 p-3">
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-text-dim">
             <Gauge className="w-3.5 h-3.5" />
-            Proof Bundle
+            Evidence Summary
           </div>
           <div className="mt-2 text-2xs text-text-muted leading-relaxed">
-            Replay pass: <span className="text-text">{reviewPack.proofBundle.replayPassRate.toFixed(0)}%</span>
+            Replay pass: <span className="text-text">{summaryPack.evidenceBundle.replayPassRate.toFixed(0)}%</span>
             <br />
-            Severity accuracy: <span className="text-text">{reviewPack.proofBundle.severityAccuracy.toFixed(0)}%</span>
+            Severity accuracy: <span className="text-text">{summaryPack.evidenceBundle.severityAccuracy.toFixed(0)}%</span>
             <br />
-            Rubric checks: <span className="text-text">{reviewPack.proofBundle.totalChecks}</span>
+            Rubric checks: <span className="text-text">{summaryPack.evidenceBundle.totalChecks}</span>
           </div>
           <div className="mt-3 text-2xs text-text-muted">
-            Runtime modes: <span className="text-text">{reviewPack.proofBundle.runtimeModes.join(", ")}</span>
+            Runtime modes: <span className="text-text">{summaryPack.evidenceBundle.runtimeModes.join(", ")}</span>
           </div>
           <div className="mt-2 text-2xs text-text-muted">
-            Exports: <span className="text-text">{reviewPack.proofBundle.exportFormats.join(", ")}</span>
+            Exports: <span className="text-text">{summaryPack.evidenceBundle.exportFormats.join(", ")}</span>
           </div>
         </div>
 
@@ -97,7 +97,7 @@ export const ReviewPackCard: React.FC<Props> = ({ reviewPack }) => {
             Trust Boundary
           </div>
           <div className="mt-2 space-y-2 text-2xs text-text-muted leading-relaxed">
-            {reviewPack.trustBoundary.map((item) => (
+            {summaryPack.trustBoundary.map((item) => (
               <div key={item}>- {item}</div>
             ))}
           </div>
@@ -109,12 +109,12 @@ export const ReviewPackCard: React.FC<Props> = ({ reviewPack }) => {
             Review Sequence
           </div>
           <div className="mt-2 space-y-2 text-2xs text-text-muted leading-relaxed">
-            {reviewPack.reviewSequence.map((item) => (
+            {summaryPack.reviewSequence.map((item) => (
               <div key={item}>- {item}</div>
             ))}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {reviewPack.proofBundle.requiredFields.slice(0, 6).map((field) => (
+            {summaryPack.evidenceBundle.requiredFields.slice(0, 6).map((field) => (
               <span key={field} className="px-2 py-1 rounded-full border border-border bg-bg text-[10px] text-text-muted">
                 {field}
               </span>

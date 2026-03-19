@@ -18,8 +18,8 @@ Turn `AegisOps` into a true `multimodal incident operating system` proof. The hi
 
 ### 60 days
 - Add provider posture comparison between demo, Gemini, and Ollama modes with visible tradeoffs in speed, cost, and quality.
-- Add operator role lanes for investigator, commander, and reviewer so handoff boundaries are explicit.
-- Add incident replay exports that let a reviewer inspect one run without reproducing live provider access.
+- Add operator role lanes for investigator, commander, and approver so handoff boundaries are explicit.
+- Add incident replay exports that let anyone inspect one run without reproducing live provider access.
 
 ### 90 days
 - Add cross-incident pattern views for recurring failure buckets and repeated weak signals.
@@ -38,6 +38,6 @@ Turn `AegisOps` into a true `multimodal incident operating system` proof. The hi
 
 ## Success Bar
 
-- A reviewer can inspect where each conclusion came from.
+- Anyone can inspect where each conclusion came from.
 - RCA quality is benchmarked instead of asserted.
 - The repo reads like a serious incident workflow, not a screenshot-plus-LLM demo.

@@ -15,7 +15,7 @@ Core routes:
 - `/api/runtime/scorecard`
 - `/api/live-sessions`
 - `/api/live-session-pack`
-- `/api/review-pack`
+- `/api/summary-pack`
 - `/api/schema/report`
 
 The pack is intentionally generic. It is suitable for realtime incident response demos without locking the product narrative to a single vendor or challenge.

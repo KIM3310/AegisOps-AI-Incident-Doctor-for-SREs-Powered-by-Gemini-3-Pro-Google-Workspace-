@@ -177,7 +177,7 @@ export function buildLiveSessionDetail(sessionId: string) {
     links: {
       liveSessionPack: "/api/live-session-pack",
       liveSessions: "/api/live-sessions",
-      reviewPack: "/api/review-pack",
+      summaryPack: "/api/summary-pack",
       runtimeScorecard: "/api/runtime/scorecard",
       reportSchema: "/api/schema/report",
     },

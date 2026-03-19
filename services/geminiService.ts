@@ -2,7 +2,7 @@ import type { IncidentReport, ReplayEvalOverview } from "../types";
 import type { ProviderComparisonResponse } from "../server/lib/providerComparison";
 import { buildAegisOpsProviderComparison } from "../server/lib/providerComparison";
 import { buildIncidentReplayEvalOverview } from "../server/lib/replayEvals";
-import { buildAegisOpsReviewPack, buildAegisOpsServiceMeta, buildIncidentReportSchema } from "../server/lib/serviceMeta";
+import { buildAegisOpsSummaryPack, buildAegisOpsServiceMeta, buildIncidentReportSchema } from "../server/lib/serviceMeta";
 import { demoAnalyzeIncident, demoFollowUpAnswer } from "../server/lib/demo";
 
 export type { ProviderComparisonResponse } from "../server/lib/providerComparison";
@@ -62,7 +62,7 @@ export interface HealthzResponse {
     analyze?: string;
     followup?: string;
     tts?: string;
-    reviewPack?: string;
+    summaryPack?: string;
     replayEvals?: string;
     providerComparison?: string;
     meta?: string;
@@ -116,7 +116,7 @@ export interface ServiceMetaResponse {
   };
   links: {
     healthz: string;
-    reviewPack: string;
+    summaryPack: string;
     replayEvals: string;
     providerComparison: string;
     reportSchema: string;
@@ -126,12 +126,12 @@ export interface ServiceMetaResponse {
   };
 }
 
-export interface ReviewPackResponse {
+export interface SummaryPackResponse {
   ok: boolean;
   service: string;
   version: number;
   deployment: DeploymentTarget;
-  reviewPackId: string;
+  summaryPackId: string;
   headline: string;
   operatorJourney: Array<{
     stage: string;
@@ -145,7 +145,7 @@ export interface ReviewPackResponse {
     surface: string;
     proof: string;
   }>;
-  proofBundle: {
+  evidenceBundle: {
     replayPassRate: number;
     severityAccuracy: number;
     totalChecks: number;
@@ -160,7 +160,7 @@ export interface ReviewPackResponse {
   }>;
   links: {
     healthz: string;
-    reviewPack: string;
+    summaryPack: string;
     replayEvals: string;
     reportSchema: string;
     readme: string;
@@ -228,7 +228,7 @@ function buildStaticDemoHealthz(): HealthzResponse {
     },
     capabilities: ["incident-analysis", "followup", "replay-evals", "service-meta", "report-schema", "workspace-demo"],
     links: {
-      reviewPack: "/api/review-pack",
+      summaryPack: "/api/summary-pack",
       replayEvals: "/api/evals/replays",
       providerComparison: "/api/evals/providers",
       meta: "/api/meta",
@@ -261,8 +261,8 @@ function buildStaticDemoServiceMeta(): ServiceMetaResponse {
   }) as ServiceMetaResponse;
 }
 
-function buildStaticDemoReviewPack(): ReviewPackResponse {
-  return buildAegisOpsReviewPack({
+function buildStaticDemoSummaryPack(): SummaryPackResponse {
+  return buildAegisOpsSummaryPack({
     deployment: "static-demo",
     maxImages: 16,
     maxLogChars: STATIC_DEMO_MAX_LOG_CHARS,
@@ -270,7 +270,7 @@ function buildStaticDemoReviewPack(): ReviewPackResponse {
     maxTtsChars: 0,
     analyzeModel: "Recorded demo",
     ttsModel: "Unavailable",
-  }) as ReviewPackResponse;
+  }) as SummaryPackResponse;
 }
 
 function buildStaticDemoProviderComparison(): ProviderComparisonResponse {
@@ -456,16 +456,16 @@ export async function fetchServiceMeta(): Promise<ServiceMetaResponse> {
   }
 }
 
-export async function fetchReviewPack(): Promise<ReviewPackResponse> {
+export async function fetchSummaryPack(): Promise<SummaryPackResponse> {
   try {
-    const response = await apiFetch<ReviewPackResponse>("/api/review-pack");
+    const response = await apiFetch<SummaryPackResponse>("/api/summary-pack");
     return {
       ...response,
       deployment: response.deployment || "backend",
     };
   } catch (error) {
     if (isApiUnavailableError(error)) {
-      return buildStaticDemoReviewPack();
+      return buildStaticDemoSummaryPack();
     }
     throw error;
   }

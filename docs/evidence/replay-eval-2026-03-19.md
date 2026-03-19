@@ -26,7 +26,7 @@ The single failure is a config default mismatch (`requestBodyLimitMb` expected 2
 
 The replay eval system validates:
 - Incident replay telemetry retrieval
-- Filtered replay summary surface for reviewer triage
+- Filtered replay summary surface for triage
 - Invalid filter rejection (400 status)
 
 ## Service Layer Coverage
@@ -46,7 +46,7 @@ The replay eval system validates:
 
 | Test Suite | Tests | Duration | Coverage |
 |------------|-------|----------|----------|
-| OpsMetaApi.test.ts | 14 | 200ms | Service meta, review pack, reviewer bundle, live session pack, postmortem pack, escalation readiness, runtime scorecard, operator sessions, OIDC auth |
+| OpsMetaApi.test.ts | 14 | 200ms | Service meta, summary pack, export summary, live session pack, postmortem pack, escalation readiness, runtime scorecard, operator sessions, OIDC auth |
 | LiveSessionsApi.test.ts | 3 | varies | Live session history, analyze/follow-up persistence, lane filters |
 | AppFrontDoor.test.ts | 3 | 122ms | Frontend rendering |
 | urlState.test.ts | 4 | 4ms | URL state management |

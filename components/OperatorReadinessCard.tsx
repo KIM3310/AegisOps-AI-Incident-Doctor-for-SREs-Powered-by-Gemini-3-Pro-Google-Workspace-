@@ -62,7 +62,7 @@ function buildNextMove(props: Props) {
       title: "Load a believable incident first",
       summary: "Start with a preset or drop in logs/screenshots so the first click proves the incident flow before any runtime claim.",
       bullets: [
-        "Preset-first is the fastest reviewer-safe path",
+        "Preset-first is the fastest bounded path",
         "A screenshot plus logs makes the report structure feel grounded",
         "Replay proof matters more than provider talk at this point",
       ],
@@ -86,7 +86,7 @@ function buildNextMove(props: Props) {
       title: "Prove the replay path, not live runtime",
       summary: "This build is static-demo, so the strongest next move is analyze the current incident and then use review routes to explain what would change in live mode.",
       bullets: [
-        "Static demo can still prove incident structure and reviewer handoff",
+        "Static demo can still prove incident structure and escalation",
         "Provider comparison is guidance, not live telemetry",
         "Use the exported report as the handoff artifact",
       ],
@@ -100,7 +100,7 @@ function buildNextMove(props: Props) {
       bullets: [
         `API key source ${props.apiKeySource}`,
         "Demo mode is acceptable for structure and workflow walkthroughs",
-        "Move to Gemini or Ollama only when the reviewer asks for live runtime proof",
+        "Move to Gemini or Ollama only when the evaluator asks for live runtime proof",
       ],
     };
   }

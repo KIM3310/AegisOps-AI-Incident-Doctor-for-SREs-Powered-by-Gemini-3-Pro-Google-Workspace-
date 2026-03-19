@@ -17,14 +17,14 @@
 ## Demo path
 
 1. show `/api/healthz`
-2. show `/api/review-pack`
+2. show `/api/summary-pack`
 3. run one multimodal incident
 4. open `/api/schema/report`
 5. show export-ready output
 
 ## Success criteria
 
-- reviewer trusts the report structure
+- confidences the report structure
 - operator can explain runtime mode and trust boundary
 - replay proof supports quality claims
 - export target receives a stable artifact
@@ -34,4 +34,4 @@
 - `docs/solution-architecture.md`
 - `docs/executive-one-pager.md`
 - `docs/INCIDENT_REPLAY_EVALS.md`
-- `docs/review-pack.svg`
+- `docs/summary-pack.svg`

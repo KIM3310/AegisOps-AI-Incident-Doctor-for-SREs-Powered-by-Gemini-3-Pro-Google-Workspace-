@@ -1,25 +1,25 @@
 # AegisOps Portfolio Proof Surface
 
-AegisOps should be reviewed as a **working operator surface with explicit proof routes**, not as a single static UI.
+AegisOps should be reviewed as a **working operator surface with explicit evidence routes**, not as a single static UI.
 
 ## Best review paths
 
 ### 1. 90-second recruiter / hiring-manager pass
 - Read the top of `README.md`
 - Open `docs/executive-one-pager.md`
-- Skim `docs/review-pack.svg`
+- Skim `docs/summary-pack.svg`
 
 What this proves:
 - the problem is clear
 - the product has a buyer story
 - the repo has visible review assets beyond source code screenshots
 
-### 2. 3-minute technical reviewer pass
+### 2. 3-minute technical evaluation pass
 - Run `npm install && npm run review:smoke`
 - Inspect:
   - `/api/healthz`
   - `/api/meta`
-  - `/api/review-pack`
+  - `/api/summary-pack`
   - `/api/live-session-pack`
   - `/api/schema/report`
   - `/api/evals/replays/summary`
@@ -47,15 +47,15 @@ What this proves:
 |---|---|---|
 | Frontier / LLM engineer | multimodal input handling, replay evals, schema-first output, grounding controls | shows model-product integration with evaluation and guardrails |
 | AI engineer | demo/live/offline runtime modes, deterministic replay suite, Teachable Machine and Gemini/Ollama posture | shows practical system design beyond prompt wrappers |
-| Solution architect | review pack, live-session pack, trust boundary, export posture, role-aware routes | shows system framing, operational boundaries, and stakeholder-friendly review flow |
-| Field / solutions engineer | sample inputs, reviewer bundle flows, export-ready artifacts, smoke verification | shows demoability, explainability, and customer-facing proof |
+| Solution architect | summary pack, live-session pack, trust boundary, export posture, role-aware routes | shows system framing, operational boundaries, and stakeholder-friendly review flow |
+| Field / solutions engineer | sample inputs, export summary flows, export-ready artifacts, smoke verification | shows demoability, explainability, and customer-facing proof |
 
-## Core proof assets
+## Core test assets
 
 ### Review endpoints
 - `GET /api/healthz`
 - `GET /api/meta`
-- `GET /api/review-pack`
+- `GET /api/summary-pack`
 - `GET /api/live-session-pack`
 - `GET /api/runtime/scorecard`
 - `GET /api/schema/report`
@@ -67,7 +67,7 @@ What this proves:
 - `docs/executive-one-pager.md`
 - `docs/solution-architecture.md`
 - `docs/INCIDENT_REPLAY_EVALS.md`
-- `docs/review-pack.svg`
+- `docs/summary-pack.svg`
 - `docs/architecture.png`
 
 ### Runnable proof commands
@@ -90,4 +90,4 @@ npm run verify
 
 The repo is strongest when judged end-to-end:
 
-`evidence ingestion -> structured incident report -> reviewer pack -> replay proof -> export posture`
+`evidence ingestion -> structured incident report -> summary pack -> replay proof -> export posture`

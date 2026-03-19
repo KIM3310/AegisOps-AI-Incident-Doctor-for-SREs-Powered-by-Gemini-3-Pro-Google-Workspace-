@@ -24,7 +24,7 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Prepare proof artifact directory
+      - name: Prepare test artifact directory
         run: mkdir -p artifacts
 
       - name: Dependency audit (high+)
@@ -45,7 +45,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Upload proof artifacts
+      - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -65,5 +65,5 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ripgrep
 
-      - name: AdSense/Cloudflare review gate
+      - name: AdSense/Cloudflare quality gate
         run: bash tools/release_ops.sh check
