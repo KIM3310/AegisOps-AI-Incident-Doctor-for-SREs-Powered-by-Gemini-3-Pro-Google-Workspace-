@@ -6,6 +6,12 @@ import type {
   ReplayEvalCheck,
   ReplayEvalOverview,
 } from "../../types";
+import type {
+  SharedIncidentSeverity,
+  SharedEvalCheckCategory,
+  SharedFailureBucket,
+} from "./aegis-shared-types";
+import { SHARED_FAILURE_TAXONOMY, SHARED_EVAL_SCHEMA_VERSION } from "./aegis-shared-types";
 import { demoAnalyzeIncident } from "./demo";
 
 function toPercent(passed: number, total: number): number {

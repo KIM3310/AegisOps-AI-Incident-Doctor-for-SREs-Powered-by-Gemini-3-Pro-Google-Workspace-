@@ -352,6 +352,21 @@ Notes:
 - TTS endpoint is treated as unavailable (`audioBase64` is empty).
 - If Ollama is not running/reachable, analyze/follow-up endpoints return `502` with a connection hint.
 
+## Shared Evaluation Framework
+
+AegisOps consumes shared incident taxonomy and evaluation types from the Aegis product family. The single source of truth lives in the sibling `Aegis-Air` repo (Python/Pydantic).
+
+- TypeScript shared types: `server/lib/aegis-shared-types.ts`
+- Python source of truth: `Aegis-Air/aegis_engine/shared_eval/schemas.py`
+- Sync check: `__tests__/SharedEvalSync.test.ts` validates that TypeScript types match the Python schemas
+- Cross-repo sync: `Aegis-Air/tests/test_shared_eval_sync.py` reads the TypeScript types file and validates compatibility
+
+When updating the incident taxonomy or eval rubric:
+1. Update the Python schemas in `Aegis-Air/aegis_engine/shared_eval/schemas.py`
+2. Run `python -m aegis_engine.shared_eval.export` to regenerate JSON Schema
+3. Update `server/lib/aegis-shared-types.ts` to match
+4. Run both sync checks to verify compatibility
+
 ## Notes / Limitations
 
 - Workspace export features require OAuth scopes; in demo mode those calls are not executed.
