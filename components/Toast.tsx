@@ -17,7 +17,7 @@ interface Props {
 
 export const ToastContainer: React.FC<Props> = ({ toasts, removeToast }) => {
   return (
-    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none" role="log" aria-live="polite" aria-label="Notifications">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onRemove={() => removeToast(toast.id)} />
       ))}
@@ -46,10 +46,10 @@ const ToastItem: React.FC<{ toast: ToastMessage; onRemove: () => void }> = ({ to
   };
 
   return (
-    <div className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg backdrop-blur-md animate-in slide-in-from-right-5 fade-in duration-300 ${styles[toast.type]}`}>
+    <div role="alert" className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg backdrop-blur-md animate-in slide-in-from-right-5 fade-in duration-300 ${styles[toast.type]}`}>
       {icons[toast.type]}
       <span className="text-sm font-medium text-text">{toast.message}</span>
-      <button onClick={onRemove} className="ml-2 hover:opacity-70">
+      <button onClick={onRemove} className="ml-2 hover:opacity-70 rounded-sm focus-visible:ring-2 focus-visible:ring-accent" aria-label="Dismiss notification">
         <X className="w-3.5 h-3.5" />
       </button>
     </div>

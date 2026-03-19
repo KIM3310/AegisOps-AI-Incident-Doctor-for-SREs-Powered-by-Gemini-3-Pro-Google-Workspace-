@@ -1727,14 +1727,14 @@ export default function App() {
                       {images.map((imgItem, idx) => (
                         <div key={idx} className="relative group/img aspect-square rounded overflow-hidden border border-border bg-black">
                           <img src={imgItem.preview} alt="" className="w-full h-full object-cover opacity-80 group-hover/img:opacity-100 transition-opacity" />
-                          <button onClick={() => removeImage(idx)} className="absolute top-1 right-1 w-5 h-5 bg-black/60 hover:bg-red-500/90 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-all">
+                          <button onClick={() => removeImage(idx)} aria-label="Remove screenshot" className="absolute top-1 right-1 w-5 h-5 bg-black/60 hover:bg-red-500/90 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 focus:opacity-100 transition-all">
                             <X className="w-3 h-3" />
                           </button>
                         </div>
                       ))}
-                    <label className="aspect-square rounded border border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-bg-hover hover:border-text-dim transition-colors text-text-dim">
-                      <Upload className="w-4 h-4" />
-                      <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                    <label className="aspect-square rounded border border-dashed border-border flex items-center justify-center cursor-pointer hover:bg-bg-hover hover:border-text-dim transition-colors text-text-dim" aria-label="Add more screenshots">
+                      <Upload className="w-4 h-4" aria-hidden="true" />
+                      <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" aria-label="Upload screenshots" />
                     </label>
                   </div>
                   ) : (
@@ -1768,8 +1768,8 @@ export default function App() {
             )}
 
             {error && (
-              <div className="flex items-start gap-3 p-4 bg-sev1/5 border border-sev1/20 rounded-lg text-xs text-sev1 animate-in fade-in slide-in-from-top-1">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div role="alert" aria-live="assertive" className="flex items-start gap-3 p-4 bg-sev1/5 border border-sev1/20 rounded-lg text-xs text-sev1 animate-in fade-in slide-in-from-top-1">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
                 <div className="flex-1 leading-relaxed">{error}</div>
               </div>
             )}
@@ -1777,11 +1777,13 @@ export default function App() {
             <button
               onClick={handleAnalyze}
               disabled={(!logs.trim() && images.length === 0) || status !== 'IDLE'}
+              aria-busy={status !== 'IDLE'}
+              aria-label={status === 'IDLE' ? 'Run incident analysis' : 'Analysis in progress'}
               className={`w-full h-11 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all shadow-sm ${
-                (logs.trim() || images.length > 0) && status === 'IDLE' ? 'bg-accent hover:bg-accent-hover text-white shadow-[0_0_20px_rgba(139,92,246,0.2)] hover:shadow-[0_0_25px_rgba(139,92,246,0.3)] hover:scale-[1.01]' : 'bg-bg-card text-text-dim border border-border cursor-not-allowed opacity-50'
+                (logs.trim() || images.length > 0) && status === 'IDLE' ? 'bg-accent hover:bg-accent-hover text-white shadow-[0_0_20px_rgba(139,92,246,0.2)] hover:shadow-[0_0_25px_rgba(139,92,246,0.3)] hover:scale-[1.01] active:scale-[0.99]' : 'bg-bg-card text-text-dim border border-border cursor-not-allowed opacity-50'
               }`}
             >
-              {status === 'IDLE' ? <><Zap className="w-4 h-4 fill-white/20" />Run Analysis</> : <><Loader2 className="w-4 h-4 animate-spin" />Processing...</>}
+              {status === 'IDLE' ? <><Zap className="w-4 h-4 fill-white/20" aria-hidden="true" />Run Analysis</> : <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />Processing...</>}
             </button>
             {enableGrounding && (
               <div className="text-2xs text-sev3/90 border border-sev3/20 bg-sev3/5 rounded-lg px-3 py-2 leading-relaxed">
