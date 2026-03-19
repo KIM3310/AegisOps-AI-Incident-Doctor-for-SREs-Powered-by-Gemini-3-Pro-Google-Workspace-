@@ -34,7 +34,7 @@ export const CommunityHub: React.FC = () => {
       return;
     }
 
-    window.disqus_config = function disqusConfig() {
+    (window as any).disqus_config = function disqusConfig(this: any) {
       this.page.url = window.location.href;
       this.page.identifier = DISQUS_IDENTIFIER;
     };

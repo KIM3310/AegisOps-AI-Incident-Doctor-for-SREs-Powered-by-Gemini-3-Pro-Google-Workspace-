@@ -53,7 +53,7 @@ async function main() {
   if (overview.buckets.length > 0) {
     const dominant = overview.buckets[0];
     console.log(
-      `[replays] dominant_gap=${dominant.category} failures=${dominant.failures} cases=${dominant.caseIds.join(",")}`
+      `[replays] dominant_gap=${dominant!.category} failures=${dominant!.failures} cases=${dominant!.caseIds.join(",")}`
     );
   } else {
     console.log("[replays] dominant_gap=none");

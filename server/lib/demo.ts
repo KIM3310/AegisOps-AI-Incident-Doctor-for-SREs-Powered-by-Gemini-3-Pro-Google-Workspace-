@@ -26,8 +26,8 @@ function extractTimeline(logs: string, limit = 8): TimelineEvent[] {
     const level = (m[2] || "INFO").toUpperCase();
     const severity = level === "ALERT" || level === "ERROR" ? "critical" : level === "WARN" ? "warning" : "info";
     events.push({
-      time: m[1].slice(-8), // best-effort "HH:mm:ss" like display
-      description: m[3] || line,
+      time: (m[1] ?? "").slice(-8), // best-effort "HH:mm:ss" like display
+      description: m[3] ?? line,
       severity,
     });
     if (events.length >= limit) break;

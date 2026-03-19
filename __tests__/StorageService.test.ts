@@ -73,7 +73,7 @@ describe('StorageService', () => {
 
       const stored = StorageService.getIncidents();
       expect(stored).toHaveLength(100); // 100개로 잘려야 함
-      expect(stored[0].report.title).toBe("Redis Failure"); // 최신이 맨 앞에 옴
+      expect(stored[0]!.report.title).toBe("Redis Failure"); // 최신이 맨 앞에 옴
     });
   });
 
@@ -102,8 +102,8 @@ describe('StorageService', () => {
       const similar = StorageService.findSimilarIncidents(targetReport);
 
       expect(similar).toHaveLength(2); // Score > 0 인 것만
-      expect(similar[0].report.title).toBe('High Similarity');
-      expect(similar[1].report.title).toBe('Medium Similarity');
+      expect(similar[0]!.report.title).toBe('High Similarity');
+      expect(similar[1]!.report.title).toBe('Medium Similarity');
     });
   });
 

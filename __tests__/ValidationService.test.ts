@@ -14,8 +14,8 @@ describe("server validation helpers", () => {
     );
 
     expect(images).toHaveLength(1);
-    expect(images[0].mimeType).toBe("image/png");
-    expect(images[0].data).toBe("aGVsbG8=");
+    expect(images[0]!.mimeType).toBe("image/png");
+    expect(images[0]!.data).toBe("aGVsbG8=");
   });
 
   it("rejects unsupported mime types", () => {

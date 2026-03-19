@@ -220,7 +220,7 @@ export function buildIncidentReplayEvalOverview(maxLogChars = 50_000): ReplayEva
   const totalExpectedChecks = INCIDENT_REPLAY_CASES.reduce((sum, item) => sum + countExpectedChecks(item), 0);
   const failedChecks = cases.reduce((sum, item) => sum + item.failedChecks.length, 0);
   const passedChecks = totalExpectedChecks - failedChecks;
-  const severityMatches = cases.filter((item, index) => item.observed.severity === INCIDENT_REPLAY_CASES[index].expected.severity).length;
+  const severityMatches = cases.filter((item, index) => item.observed.severity === INCIDENT_REPLAY_CASES[index]?.expected.severity).length;
 
   return {
     ok: true,

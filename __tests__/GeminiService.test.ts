@@ -180,7 +180,7 @@ describe("geminiService apiFetch", () => {
 
     const payload = await fetchProviderComparison();
     expect(payload.service).toBe("aegisops-provider-comparison");
-    expect(payload.providers[1].id).toBe("gemini");
+    expect(payload.providers[1]!.id).toBe("gemini");
     expect(payload.links.providerComparison).toBe("/api/evals/providers");
   });
 
@@ -305,7 +305,7 @@ describe("geminiService apiFetch", () => {
 
     const payload = await fetchReportSchema();
     expect(payload.requiredFields).toContain("severity");
-    expect(payload.fieldGuide[0].key).toBe("severity");
+    expect(payload.fieldGuide[0]!.key).toBe("severity");
   });
 
   it("falls back to local replay telemetry when the backend is absent", async () => {

@@ -52,7 +52,7 @@ const decodeAudioData = async (
   const channelData = buffer.getChannelData(0);
   
   for (let i = 0; i < int16Data.length; i++) {
-    channelData[i] = int16Data[i] / 32768.0;
+    channelData[i] = (int16Data[i] ?? 0) / 32768.0;
   }
   
   return buffer;
@@ -322,8 +322,8 @@ export const ReportCard: React.FC<Props> = ({ report, enableGrounding = false, t
 
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2.5">
-            <span className={`h-2.5 w-2.5 rounded-full ${s.dot} shadow-[0_0_8px_rgba(0,0,0,0.3)] animate-pulse`} />
-            <span className={`text-xs font-bold px-2 py-0.5 rounded border ${s.bg} border-transparent ${s.c}`}>{report.severity}</span>
+            <span className={`h-2.5 w-2.5 rounded-full ${s?.dot ?? ""} shadow-[0_0_8px_rgba(0,0,0,0.3)] animate-pulse`} />
+            <span className={`text-xs font-bold px-2 py-0.5 rounded border ${s?.bg ?? ""} border-transparent ${s?.c ?? ""}`}>{report.severity}</span>
             <span className="text-xs text-text-dim border-l border-border pl-2.5">{new Date().toLocaleDateString()}</span>
             <span className={`text-[10px] px-2 py-0.5 rounded-full border ${enableGrounding ? 'bg-sev3/10 text-sev3 border-sev3/20' : 'bg-bg text-text-dim border-border'}`}>
               Grounding: {enableGrounding ? 'ON' : 'OFF'}

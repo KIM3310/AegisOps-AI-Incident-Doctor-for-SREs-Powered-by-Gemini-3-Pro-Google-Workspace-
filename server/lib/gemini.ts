@@ -150,8 +150,8 @@ export async function geminiAnalyzeIncident(input: {
     try {
       const cfg: any = {
         systemInstruction: SYSTEM_INSTRUCTION,
-        temperature: strategies[attempt].temperature,
-        topK: strategies[attempt].topK,
+        temperature: strategies[attempt]!.temperature,
+        topK: strategies[attempt]!.topK,
         safetySettings: SAFETY_SETTINGS,
       };
       if (input.enableGrounding) cfg.tools = [{ googleSearch: {} }];

@@ -36,7 +36,7 @@ describe('sendToChatWebhook', () => {
 
     expect(ok).toBe(true);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-    const [, init] = fetchSpy.mock.calls[0];
+    const [, init] = fetchSpy.mock.calls[0]!;
     const parsed = JSON.parse(String(init?.body));
     expect(parsed.cards[0].header.title).toContain('⚪ [UNKNOWN]');
   });

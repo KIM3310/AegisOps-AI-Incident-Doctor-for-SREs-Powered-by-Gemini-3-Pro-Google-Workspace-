@@ -65,7 +65,7 @@ export async function downloadMultipleFiles(accessToken: string, files: DriveFil
           const blob = await res.blob();
           const b64 = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = () => resolve((reader.result as string).split(',')[1]);
+            reader.onload = () => resolve((reader.result as string).split(',')[1] ?? "");
             reader.onerror = () => reject(new Error('FileReader error'));
             reader.readAsDataURL(blob);
           });

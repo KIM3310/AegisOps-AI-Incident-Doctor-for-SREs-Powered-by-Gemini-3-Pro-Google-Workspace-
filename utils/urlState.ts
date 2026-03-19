@@ -53,7 +53,7 @@ export function parseReviewUrlState(search: string): ReviewUrlState {
   return next;
 }
 
-export function buildReviewUrlSearch(state: Required<ReviewUrlState>) {
+export function buildReviewUrlSearch(state: { preset?: string; incident?: string; grounding: boolean; tm: boolean; history: boolean }) {
   const params = new URLSearchParams();
   if (state.preset) params.set("preset", state.preset);
   if (state.incident) params.set("incident", state.incident);

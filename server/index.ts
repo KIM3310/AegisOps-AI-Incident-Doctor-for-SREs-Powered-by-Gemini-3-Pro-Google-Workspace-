@@ -8,6 +8,7 @@ import type { IncidentReport } from "../types";
 import { loadConfig } from "./lib/config";
 import { demoAnalyzeIncident, demoFollowUpAnswer } from "./lib/demo";
 import { geminiAnalyzeIncident, geminiFollowUp, geminiTts } from "./lib/gemini";
+import { logger } from "./lib/logger";
 import { ollamaAnalyzeIncident, ollamaFollowUp } from "./lib/ollama";
 import {
   getOperatorAuthStatus,
@@ -28,6 +29,15 @@ import { buildAnalyzeCacheKey, createAnalyzeCache } from "./lib/analyzeCache";
 import { buildAegisOpsProviderComparison } from "./lib/providerComparison";
 import { buildIncidentReplayEvalOverview, buildIncidentReplayEvalSummary } from "./lib/replayEvals";
 import { appendRuntimeEvent, buildRuntimeStoreSummary } from "./lib/runtimeStore";
+import {
+  AnalyzeBodySchema,
+  ApiKeyBodySchema,
+  FollowUpBodySchema,
+  LiveEscalationPreviewBodySchema,
+  OperatorSessionBodySchema,
+  TtsBodySchema,
+  validateBody,
+} from "./lib/schemas";
 import {
   appendLiveSessionEvent,
   buildLiveSessionDetail,
@@ -250,7 +260,7 @@ function recordRuntimeTelemetry(
   endpoint.requests += 1;
   endpoint.totalMs += elapsedMs;
   endpoint.maxMs = Math.max(endpoint.maxMs, elapsedMs);
-  endpoint.latencyBuckets[bucket] += 1;
+  endpoint.latencyBuckets[bucket] = (endpoint.latencyBuckets[bucket] ?? 0) + 1;
   endpoint.lastRequestAt = now;
 
   if (elapsedMs >= SLOW_REQUEST_MS) {
@@ -295,19 +305,13 @@ function logApiEvent(
   event: string,
   payload: Record<string, unknown>
 ): void {
-  const line = JSON.stringify({
-    at: new Date().toISOString(),
-    event,
-    level,
-    service: "aegisops-api",
-    ...payload,
-  });
+  const child = logger.child({ event, service: "aegisops-api" });
   if (level === "error") {
-    console.error(line);
+    child.error(payload);
   } else if (level === "warn") {
-    console.warn(line);
+    child.warn(payload);
   } else {
-    console.info(line);
+    child.info(payload);
   }
 }
 
@@ -969,7 +973,7 @@ function buildReviewerBundle() {
 function normalizeAddress(value: string | undefined): string {
   const raw = String(value || "").trim().toLowerCase();
   if (!raw) return "";
-  const noZone = raw.split("%")[0];
+  const noZone = raw.split("%")[0] ?? raw;
   if (noZone.startsWith("::ffff:")) return noZone.slice("::ffff:".length);
   return noZone;
 }
@@ -1350,13 +1354,14 @@ app.post("/api/auth/session", async (req, res) => {
     return sendError(req, res, 409, "Operator auth is not configured for session login.");
   }
 
-  const body = (req.body || {}) as OperatorSessionBody;
-  const credential = String(body.credential || "").trim();
+  const parsed = validateBody(OperatorSessionBodySchema, req.body || {});
+  if (!parsed.success) {
+    return sendError(req, res, 400, parsed.error);
+  }
+  const body = parsed.data;
+  const credential = body.credential.trim();
   const requestedMode = String(body.authMode || "").trim().toLowerCase();
   const roles = normalizeSessionRoles(body.roles);
-  if (!credential) {
-    return sendError(req, res, 400, "Missing credential.");
-  }
   if (requestedMode && requestedMode !== "token" && requestedMode !== "oidc") {
     return sendError(req, res, 400, "authMode must be either 'token' or 'oidc'.");
   }
@@ -1678,9 +1683,11 @@ app.post("/api/live-escalation-preview", async (req, res) => {
     return sendError(req, res, 429, "Too many live escalation preview requests. Please slow down.");
   }
 
-  const incidentBundleId = String((req.body || {}).incidentBundleId || "")
-    .trim()
-    .toLowerCase();
+  const escalationParsed = validateBody(LiveEscalationPreviewBodySchema, req.body || {});
+  if (!escalationParsed.success) {
+    return sendError(req, res, 400, escalationParsed.error);
+  }
+  const incidentBundleId = escalationParsed.data.incidentBundleId.trim().toLowerCase();
   const bundle = OPENAI_INCIDENT_BUNDLES[incidentBundleId];
   if (!bundle) {
     return sendError(
@@ -1810,8 +1817,11 @@ app.put("/api/settings/api-key", (req, res) => {
   if (cfg.llmProvider === "ollama") {
     return sendError(req, res, 409, "Runtime Gemini API key is unavailable while LLM_PROVIDER=ollama.");
   }
-  const body = (req.body || {}) as ApiKeyBody;
-  const apiKey = String(body.apiKey || "").trim();
+  const parsed = validateBody(ApiKeyBodySchema, req.body || {});
+  if (!parsed.success) {
+    return sendError(req, res, 400, parsed.error);
+  }
+  const apiKey = parsed.data.apiKey.trim();
   if (!apiKey) return sendError(req, res, 400, "Missing apiKey.");
   if (!isValidGeminiApiKey(apiKey)) {
     return sendError(req, res, 400, "Invalid apiKey format.");
@@ -1852,7 +1862,11 @@ app.post("/api/analyze", async (req, res) => {
       return sendError(req, res, 429, "Too many analyze requests. Please slow down.");
     }
 
-    const body = (req.body || {}) as AnalyzeBody;
+    const parsed = validateBody(AnalyzeBodySchema, req.body || {});
+    if (!parsed.success) {
+      return sendError(req, res, 400, parsed.error);
+    }
+    const body = parsed.data;
 
     // Per-session rate limit: max 10 requests per minute per session.
     const sessionKey = String(body.sessionId || "").trim();
@@ -1988,7 +2002,11 @@ app.post("/api/followup", async (req, res) => {
       return sendError(req, res, 429, "Too many follow-up requests. Please slow down.");
     }
 
-    const body = (req.body || {}) as FollowUpBody;
+    const parsed = validateBody(FollowUpBodySchema, req.body || {});
+    if (!parsed.success) {
+      return sendError(req, res, 400, parsed.error);
+    }
+    const body = parsed.data;
     const liveSession = resolveLiveSessionContext({
       lane: body.lane,
       requestId: req.requestId,
@@ -2081,7 +2099,11 @@ app.post("/api/tts", async (req, res) => {
       return sendError(req, res, 429, "Too many TTS requests. Please slow down.");
     }
 
-    const body = (req.body || {}) as TtsBody;
+    const parsed = validateBody(TtsBodySchema, req.body || {});
+    if (!parsed.success) {
+      return sendError(req, res, 400, parsed.error);
+    }
+    const body = parsed.data;
     const liveSession = resolveLiveSessionContext({
       lane: body.lane,
       requestId: req.requestId,

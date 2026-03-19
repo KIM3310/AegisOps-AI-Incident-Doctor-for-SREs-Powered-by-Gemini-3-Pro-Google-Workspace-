@@ -915,7 +915,7 @@ export default function App() {
               reader.onload = () => { 
                 clearTimeout(timeout);
                 const result = String(reader.result || "");
-                const data = result.includes(",") ? result.split(",")[1] : result;
+                const data = result.includes(",") ? (result.split(",")[1] ?? "") : result;
                 resolve({ mimeType: imgItem.file.type || "image/png", data });
               };
               reader.onerror = () => { clearTimeout(timeout); reject(new Error("Failed to read image")); };
@@ -1521,7 +1521,7 @@ export default function App() {
                   Schema {reportSchema?.schemaId ?? 'loading'}
                 </span>
                 <span className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">
-                  Replay {replayOverview ? `${replayOverview.passRate}% pass` : 'loading'}
+                  Replay {replayOverview ? `${replayOverview.summary.passRate}% pass` : 'loading'}
                 </span>
                 {reviewStateChips.map((chip) => (
                   <span key={chip} className="text-[10px] px-2 py-1 rounded-full border bg-bg text-text-dim border-border">

@@ -22,7 +22,7 @@ const formatTime = (timeStr: string): string => {
   
   if (match) {
     // If it has milliseconds, truncate them for cleaner display
-    return match[1].split('.')[0]; 
+    return (match[1] ?? "").split('.')[0] ?? "";
   }
 
   // 3. Fallback: return first 8 chars (usually HH:mm:ss) or full string if short

@@ -24,7 +24,7 @@ describe('googleApiClient', () => {
 
     expect(res.ok).toBe(true);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-    const [, init] = fetchSpy.mock.calls[0];
+    const [, init] = fetchSpy.mock.calls[0]!;
     expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer token-abc');
   });
 

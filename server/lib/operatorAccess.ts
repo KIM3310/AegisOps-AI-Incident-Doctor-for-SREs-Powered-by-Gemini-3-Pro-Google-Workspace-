@@ -272,7 +272,7 @@ function selectOidcJwk(keys: OidcJwk[], header: JwtHeader): OidcJwk | null {
     }
   }
   if (keys.length === 1) {
-    return keys[0];
+    return keys[0] ?? null;
   }
   return null;
 }
@@ -346,7 +346,9 @@ async function verifyOidcToken(token: string): Promise<VerifiedOperatorIdentity 
     return null;
   }
 
-  const [encodedHeader, encodedPayload, encodedSignature] = segments;
+  const encodedHeader = segments[0] ?? "";
+  const encodedPayload = segments[1] ?? "";
+  const encodedSignature = segments[2] ?? "";
   const header = parseJwtPart<JwtHeader>(encodedHeader);
   if (header.alg !== "RS256") {
     return null;
