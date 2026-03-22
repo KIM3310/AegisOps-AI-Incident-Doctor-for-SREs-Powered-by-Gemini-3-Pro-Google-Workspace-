@@ -47,7 +47,7 @@ function resolveStorePath(): string {
   if (configured) {
     return path.resolve(configured);
   }
-  return path.join(process.cwd(), ".runtime", "aegisops-runtime-events.db");
+  return path.join(process.cwd(), ".runtime", "aegisops-runtime-events.jsonl");
 }
 
 function resolveStoreBackend(targetPath: string): RuntimeStoreBackend {
