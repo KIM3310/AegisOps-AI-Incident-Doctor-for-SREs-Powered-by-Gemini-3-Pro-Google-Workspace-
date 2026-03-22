@@ -10,13 +10,13 @@
     "dev": "concurrently -n api,web -c blue,magenta \"npm run dev:api\" \"npm run dev:web\"",
     "build": "vite build",
     "preview": "vite preview",
-    "eval:replays": "tsx scripts/run-incident-replays.ts",
-    "review:smoke": "tsx scripts/review-surface-smoke.ts",
+    "eval:replays": "NODE_OPTIONS=--disable-warning=ExperimentalWarning tsx scripts/run-incident-replays.ts",
+    "review:smoke": "NODE_OPTIONS=--disable-warning=ExperimentalWarning tsx scripts/review-surface-smoke.ts",
     "exercise:runtime": "node scripts/exercise-runtime.mjs",
     "load:runtime": "tsx scripts/load-runtime.ts",
     "load:k6": "k6 run scripts/k6-runtime-scorecard.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "NODE_OPTIONS=--disable-warning=ExperimentalWarning vitest run",
     "verify": "npm run typecheck && npm test && npm run eval:replays && npm run review:smoke && npm run build"
   },
   "dependencies": {
