@@ -40,6 +40,17 @@ Companion repo:
 - Runtime posture: static demo, demo backend, live provider mode, Ollama local
 - Export posture: JSON, Markdown, Slack, Jira, plus optional Workspace flows
 
+## Reviewer Fast Path
+
+If someone opens the repo cold, the fastest trustworthy sequence is:
+
+1. `GET /api/healthz` — confirm backend mode, limits, and review links
+2. `GET /api/runtime/scorecard` — read runtime posture before any incident claims
+3. `GET /api/system-design-pack` — inspect service topology and failure drill shape
+4. `GET /api/live-session-pack` — review the operator handoff surface
+5. `GET /api/summary-pack` — compress replay proof, trust boundary, and export posture
+6. `GET /api/schema/report` — lock the report contract before downstream use
+
 ## Quick Start
 
 - Open `GET /api/live-session-pack` -> `GET /api/postmortem-pack` -> `GET /api/evals/providers` -> `server/`.

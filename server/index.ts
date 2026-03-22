@@ -1528,6 +1528,14 @@ app.get("/api/healthz", (req, res) => {
       "runtime-api-key-override",
       "incident-replay-evals",
     ],
+    reviewerFastPath: [
+      "/api/healthz",
+      "/api/runtime/scorecard",
+      "/api/system-design-pack",
+      "/api/live-session-pack",
+      "/api/summary-pack",
+      "/api/schema/report",
+    ],
     links: {
       apiKey: "/api/settings/api-key",
       analyze: "/api/analyze",
