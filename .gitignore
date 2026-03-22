@@ -27,3 +27,4 @@ dist-ssr
 *.sw?
 .codex_runs/
 .runtime/
+.omc/
