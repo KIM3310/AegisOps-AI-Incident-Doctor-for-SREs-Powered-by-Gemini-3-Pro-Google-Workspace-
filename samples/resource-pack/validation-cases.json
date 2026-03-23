@@ -1,0 +1,22 @@
+[
+  {
+    "caseId": "replay-severity-check",
+    "goal": "Severity labels should stay aligned with the replay rubric when the same evidence is re-run.",
+    "evidence": "/api/evals/replays"
+  },
+  {
+    "caseId": "operator-handoff-check",
+    "goal": "Postmortem and live-session views should expose the same incident narrative and next action.",
+    "evidence": "/api/postmortem-pack"
+  },
+  {
+    "caseId": "runtime-contract-check",
+    "goal": "Runtime limits, cache state, and authentication posture should stay visible to operators.",
+    "evidence": "/api/runtime/scorecard"
+  },
+  {
+    "caseId": "export-boundary-check",
+    "goal": "Summary pack and report schema should match before exports or downstream communication.",
+    "evidence": "/api/summary-pack"
+  }
+]

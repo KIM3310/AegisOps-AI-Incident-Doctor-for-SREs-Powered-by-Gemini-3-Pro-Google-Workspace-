@@ -71,6 +71,7 @@ describe("error handling and edge cases", () => {
       expect.arrayContaining([
         "/api/healthz",
         "/api/runtime/scorecard",
+        "/api/resource-pack",
         "/api/summary-pack",
         "/api/schema/report",
       ])

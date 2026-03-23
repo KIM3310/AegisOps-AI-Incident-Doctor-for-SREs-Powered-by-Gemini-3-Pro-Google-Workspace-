@@ -1,4 +1,5 @@
 import type { ExportFormat } from "../../types";
+import { buildAegisOpsResourcePack } from "./resourcePack";
 import { buildIncidentReplayEvalOverview, buildIncidentReplayEvalSummary } from "./replayEvals";
 
 export type ServiceMetaDeployment = "backend" | "static-demo";
@@ -49,6 +50,11 @@ function buildAegisOpsProofAssets() {
       label: "Sample screenshots",
       path: "samples/screenshots",
       kind: "sample",
+    },
+    {
+      label: "Resource pack",
+      path: "/api/resource-pack",
+      kind: "route",
     },
   ];
 }
@@ -212,6 +218,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
       exportBundle: "/api/export-bundle",
       exportBundleVerify: "/api/export-bundle/verify",
       runtimeScorecard: "/api/runtime/scorecard",
+      resourcePack: "/api/resource-pack",
       replayEvals: "/api/evals/replays",
       replaySummary: "/api/evals/replays/summary",
       providerComparison: "/api/evals/providers",
@@ -226,6 +233,7 @@ export function buildAegisOpsServiceMeta(options: ServiceMetaOptions) {
 export function buildAegisOpsLiveSessionPack(options: ServiceMetaOptions) {
   const serviceMeta = buildAegisOpsServiceMeta(options);
   const replaySummary = buildIncidentReplayEvalSummary(options.maxLogChars);
+  const resourcePack = buildAegisOpsResourcePack();
 
   return {
     ok: true,
@@ -286,6 +294,7 @@ export function buildAegisOpsLiveSessionPack(options: ServiceMetaOptions) {
       recommendedReviewRoutes: [
         "/api/healthz",
         "/api/runtime/scorecard",
+        "/api/resource-pack",
         "/api/system-design-pack",
         "/api/live-sessions",
         "/api/live-session-pack",
@@ -316,6 +325,7 @@ export function buildAegisOpsSummaryPack(options: ServiceMetaOptions) {
   const serviceMeta = buildAegisOpsServiceMeta(options);
   const replaySummary = buildIncidentReplayEvalSummary(options.maxLogChars);
   const reportSchema = buildIncidentReportSchema(options);
+  const resourcePack = buildAegisOpsResourcePack();
 
   return {
     ok: true,
@@ -374,12 +384,17 @@ export function buildAegisOpsSummaryPack(options: ServiceMetaOptions) {
         proof: "Inspect topology, hot endpoints, and drill posture before describing runtime readiness.",
       },
       {
-        step: "4. Contract boundary",
+        step: "4. Built-in evidence pack",
+        surface: "/api/resource-pack",
+        proof: "Inspect checked-in incident bundles, annotations, and review checks without live provider access.",
+      },
+      {
+        step: "5. Contract boundary",
         surface: "/api/schema/report",
         proof: "Check required fields, export formats, and payload limits before trusting handoff output.",
       },
       {
-        step: "5. Asset proof",
+        step: "6. Asset proof",
         surface: "docs/summary-pack.svg -> docs/system-design-pack.svg -> docs/architecture.png",
         proof: "Verify evaluation flow and key hygiene without tracing the full codebase first.",
       },
@@ -395,6 +410,7 @@ export function buildAegisOpsSummaryPack(options: ServiceMetaOptions) {
       runtimeModes: serviceMeta.runtimeModes.map((mode) => mode.label),
       exportFormats: reportSchema.exportFormats,
       requiredFields: reportSchema.requiredFields,
+      resourcePack: resourcePack.summary,
     },
     proofAssets: buildAegisOpsProofAssets(),
     links: serviceMeta.links,

@@ -53,6 +53,7 @@ import {
   buildAegisOpsServiceMeta,
   buildIncidentReportSchema,
 } from "./lib/serviceMeta";
+import { buildAegisOpsResourcePack } from "./lib/resourcePack";
 import { normalizeAndValidateImages } from "./lib/validation";
 import { getAwsStatus, isAwsEnabled } from "./lib/aws-adapter";
 import { getGcpStatus, isGcpEnabled } from "./lib/gcp-adapter";
@@ -910,10 +911,12 @@ function buildReviewerBundle() {
     maxQuestionChars: cfg.maxQuestionChars,
     maxTtsChars: cfg.maxTtsChars,
   });
+  const resourcePack = buildAegisOpsResourcePack();
   const digestPayload = {
     summaryPackId: summaryPack.summaryPackId,
     liveSessionPackId: liveSessionPack.liveSessionPackId,
     reportSchemaId: reportSchema.schemaId,
+    resourcePackId: resourcePack.resourcePackId,
     provider: runtimeScorecard.provider,
     focus: runtimeScorecard.focus,
     replaySummary: runtimeScorecard.replaySummary,
@@ -931,10 +934,15 @@ function buildReviewerBundle() {
     summaryPackId: summaryPack.summaryPackId,
     liveSessionPackId: liveSessionPack.liveSessionPackId,
     reportSchemaId: reportSchema.schemaId,
+    resourcePackId: resourcePack.resourcePackId,
     provider: runtimeScorecard.provider,
     bundle: {
       summaryPack,
       liveSessionPack,
+      resourcePack: {
+        resourcePackId: resourcePack.resourcePackId,
+        summary: resourcePack.summary,
+      },
       runtimeScorecard: {
         service: runtimeScorecard.service,
         focus: runtimeScorecard.focus,
@@ -953,6 +961,7 @@ function buildReviewerBundle() {
       coveredSections: [
         "summaryPack",
         "liveSessionPack",
+        "resourcePack.summary",
         "runtimeScorecard.summary",
         "reportSchema",
         "operatorAuth",
@@ -1541,11 +1550,13 @@ app.get("/api/healthz", (req, res) => {
       "tts-briefing",
       "runtime-api-key-override",
       "incident-replay-evals",
+      "built-in-resource-pack",
     ],
     reviewerFastPath: [
       "/api/healthz",
       "/api/runtime/scorecard",
       "/api/system-design-pack",
+      "/api/resource-pack",
       "/api/live-session-pack",
       "/api/summary-pack",
       "/api/schema/report",
@@ -1565,6 +1576,7 @@ app.get("/api/healthz", (req, res) => {
       replaySummary: "/api/evals/replays/summary",
       providerComparison: "/api/evals/providers",
       runtimeScorecard: "/api/runtime/scorecard",
+      resourcePack: "/api/resource-pack",
       authSession: "/api/auth/session",
       meta: "/api/meta",
       reportSchema: "/api/schema/report",
@@ -1639,6 +1651,10 @@ app.get("/api/runtime/scorecard", (req, res) => {
     ...buildRuntimeScorecard(normalizeScorecardFocus(rawFocus)),
     openai: getOpenAiRuntimeContract(),
   });
+});
+
+app.get("/api/resource-pack", (req, res) => {
+  res.json(buildAegisOpsResourcePack());
 });
 
 app.get("/api/live-sessions", (req, res) => {

@@ -94,6 +94,7 @@ describe("service meta endpoints", () => {
     expect(body.links.exportBundle).toBe("/api/export-bundle");
     expect(body.links.exportBundleVerify).toBe("/api/export-bundle/verify");
     expect(body.links.runtimeScorecard).toBe("/api/runtime/scorecard");
+    expect(body.links.resourcePack).toBe("/api/resource-pack");
     expect(body.links.replaySummary).toBe("/api/evals/replays/summary");
     expect(body.links.reportSchema).toBe("/api/schema/report");
     expect(body.openai.deploymentMode).toBe("public-capped-live");
@@ -116,10 +117,23 @@ describe("service meta endpoints", () => {
     expect(body.evidenceBundle.postmortemPackId).toBe("aegisops-postmortem-pack-v1");
     expect(body.evidenceBundle.systemDesignPackId).toBe("aegisops-system-design-pack-v1");
     expect(body.evidenceBundle.replaySummaryId).toBe("incident-replay-summary-v1");
+    expect(body.evidenceBundle.resourcePack.incidentBundleCount).toBeGreaterThanOrEqual(4);
     expect(body.links.liveSessionPack).toBe("/api/live-session-pack");
     expect(body.links.postmortemPack).toBe("/api/postmortem-pack");
     expect(body.links.systemDesignPack).toBe("/api/system-design-pack");
     expect(body.links.summaryPack).toBe("/api/summary-pack");
+  });
+
+  it("returns a resource pack for review-safe incident walkthroughs", async () => {
+    const res = await fetch(`${baseUrl}/api/resource-pack`);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.resourcePackId).toBe("aegisops-resource-pack-v1");
+    expect(body.summary.incidentBundleCount).toBeGreaterThanOrEqual(4);
+    expect(body.reviewerFastPath).toContain("/api/resource-pack");
+    expect(body.files.incidentBundles).toBe("samples/resource-pack/incident-bundles.json");
   });
 
   it("returns a digest-backed export summary and verification surface", async () => {

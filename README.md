@@ -30,6 +30,7 @@ Companion repo:
 ## Summary Pack At A Glance
 
 - Evaluation API surface: `GET /api/healthz`, `GET /api/meta`, `GET /api/summary-pack`, `GET /api/schema/report`
+- Built-in sample pack: `GET /api/resource-pack`
 - Bounded public live lane: `POST /api/live-escalation-preview`
 - Session history API: `GET /api/live-sessions`, `GET /api/live-sessions/:sessionId`
 - Live session surface: `GET /api/live-session-pack`
@@ -46,10 +47,11 @@ If someone opens the repo cold, the fastest trustworthy sequence is:
 
 1. `GET /api/healthz` — confirm backend mode, limits, and review links
 2. `GET /api/runtime/scorecard` — read runtime posture before any incident claims
-3. `GET /api/system-design-pack` — inspect service topology and failure drill shape
-4. `GET /api/live-session-pack` — review the operator handoff surface
-5. `GET /api/summary-pack` — compress replay proof, trust boundary, and export posture
-6. `GET /api/schema/report` — lock the report contract before downstream use
+3. `GET /api/resource-pack` — inspect built-in incident bundles, annotations, and operator checks
+4. `GET /api/system-design-pack` — inspect service topology and failure drill shape
+5. `GET /api/live-session-pack` — review the operator handoff surface
+6. `GET /api/summary-pack` — compress replay proof, trust boundary, and export posture
+7. `GET /api/schema/report` — lock the report contract before downstream use
 
 ## Quick Start
 
@@ -63,10 +65,11 @@ If someone opens the repo cold, the fastest trustworthy sequence is:
 3. `GET /api/live-session-pack` -> inspect realtime modality, operator roles, and live handoff routes.
 4. `GET /api/postmortem-pack` -> inspect evidence timeline, replay posture, and handoff contract in one surface.
 5. `GET /api/live-sessions` -> verify that live incident loops remain reviewable across multiple requests.
-6. `GET /api/summary-pack` -> inspect replay proof, runtime modes, and trust boundary.
-7. `GET /api/evals/providers` -> compare demo/Gemini/Ollama tradeoffs before making runtime-quality or cost claims.
-8. `GET /api/schema/report` -> verify incident contract and export boundary.
-9. `docs/summary-pack.svg` + `docs/system-design-pack.svg` + `docs/architecture.png` -> read evaluation flow and key hygiene in one glance.
+6. `GET /api/resource-pack` -> inspect checked-in incident bundles, annotations, and review checks without live keys.
+7. `GET /api/summary-pack` -> inspect replay proof, runtime modes, and trust boundary.
+8. `GET /api/evals/providers` -> compare demo/Gemini/Ollama tradeoffs before making runtime-quality or cost claims.
+9. `GET /api/schema/report` -> verify incident contract and export boundary.
+10. `docs/summary-pack.svg` + `docs/system-design-pack.svg` + `docs/architecture.png` -> read evaluation flow and key hygiene in one glance.
 
 ![AegisOps Summary Pack](docs/summary-pack.svg)
 
@@ -122,6 +125,8 @@ AegisOps exposes explicit review surfaces for operators:
   - realtime modality map, operator roles, reliability posture, and live review routes
 - `GET /api/postmortem-pack`
   - evidence-first postmortem pack tying live session traces, runtime telemetry, replay posture, and export-safe handoff together
+- `GET /api/resource-pack`
+  - checked-in incident bundles, annotations, operator checks, and validation cases for reviewer-safe demos
 - `GET /api/live-sessions`
   - persisted incident session history with lane-aware summaries and detailed session timelines
 - `GET /api/summary-pack`
@@ -139,6 +144,7 @@ This is intentional: the repo should be reviewable as a service surface, not jus
 - `docs/INCIDENT_REPLAY_EVALS.md`
 - `samples/logs`
 - `samples/screenshots`
+- `samples/resource-pack`
 
 ## Architecture
 

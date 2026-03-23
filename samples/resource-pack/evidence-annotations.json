@@ -1,0 +1,26 @@
+[
+  {
+    "annotationId": "latency-p95",
+    "source": "latency_dashboard.png",
+    "kind": "metric",
+    "annotation": "P95 latency crosses 4s while queue depth grows and success rate decays."
+  },
+  {
+    "annotationId": "retry-burst",
+    "source": "llm_latency_spike.txt",
+    "kind": "log",
+    "annotation": "Repeated timeout and retry messages suggest worker exhaustion rather than one bad request."
+  },
+  {
+    "annotationId": "redis-cluster-loss",
+    "source": "redis_dashboard.png",
+    "kind": "metric",
+    "annotation": "Replica loss and write amplification point to cache availability as the first suspected failure domain."
+  },
+  {
+    "annotationId": "cache-fallback",
+    "source": "redis_cluster_crash.txt",
+    "kind": "log",
+    "annotation": "Fallback cache misses keep traffic moving but increase downstream database pressure."
+  }
+]
