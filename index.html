@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- SEO Meta Tags -->
+  <title>AegisOps - Incident Review Console</title>
+  <meta name="description" content="AegisOps turns logs and monitoring screenshots into structured incident reports with replay-based evaluation, follow-up review, and Workspace export flows." />
+  <meta name="keywords" content="SRE, Incident Review, Post-Mortem, DevOps, Log Analysis, Multimodal Triage, Google Workspace Integration, Site Reliability Engineering, Root Cause Analysis" />
+  <meta name="author" content="AegisOps" />
+  <meta name="robots" content="index, follow" />
+  <meta name="google-adsense-account" content="ca-pub-4973160293737562" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://aegisops-ai-incident-doctor.pages.dev/" />
+  <meta property="og:title" content="AegisOps - Incident Review Console" />
+  <meta property="og:description" content="Structured incident review from logs and screenshots, with replay-based checks and Workspace export flows." />
+  <meta property="og:image" content="https://img.youtube.com/vi/FOcjPcMheIg/maxresdefault.jpg" />
+  <meta property="og:image:alt" content="AegisOps Demo Thumbnail" />
+  
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="AegisOps - Incident Review Console" />
+  <meta name="twitter:description" content="Structured incident review from logs and screenshots, with replay-based checks and Workspace export flows." />
+  <meta name="twitter:image" content="https://img.youtube.com/vi/FOcjPcMheIg/maxresdefault.jpg" />
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: { DEFAULT: '#09090B', card: '#131316', hover: '#1A1A1E' },
+            border: { DEFAULT: '#232329', light: '#2E2E36' },
+            accent: { DEFAULT: '#8B5CF6', hover: '#7C3AED' },
+            text: { DEFAULT: '#ECECF1', muted: '#71717A', dim: '#52525B' },
+            sev1: '#EF4444', sev2: '#F97316', sev3: '#EAB308'
+          },
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          fontSize: { '2xs': '11px' }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { scrollbar-width: thin; scrollbar-color: #232329 #09090B; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #09090B; }
+    ::-webkit-scrollbar-thumb { background: #232329; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a3a44; }
+
+    /* Focus-visible accessibility ring */
+    a:focus-visible, button:focus-visible, input:focus-visible,
+    select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid #8B5CF6;
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    /* Smooth transitions for interactive elements */
+    a, button { transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease; }
+    button:active:not(:disabled) { transform: scale(0.97); }
+
+    /* Selection style */
+    ::selection { background: rgba(139, 92, 246, 0.35); color: #fff; }
+
+    /* Mobile responsive helpers */
+    @media (max-width: 640px) {
+      .grid { gap: 0.75rem !important; }
+      textarea { font-size: 16px !important; /* prevent iOS zoom */ }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.560.0"
+  }
+}
+</script>
+<meta name="clarity-project-id" content="" />
+<meta name="gtm-container-id" content="" />
+<meta name="analytics-require-consent" content="false" />
+</head>
+<body class="bg-bg text-text antialiased font-sans">
+  <div id="root"></div>
+  <script type="module" src="./index.tsx"></script>
+<script defer src="/analytics.js"></script>
+</body>
+</html>

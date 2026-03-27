@@ -1,0 +1,34 @@
+[
+  {
+    "bundleId": "checkout-latency-burst",
+    "severity": "SEV1",
+    "lane": "incident-command",
+    "logSample": "samples/logs/llm_latency_spike.txt",
+    "screenshotSample": "samples/screenshots/latency_dashboard.png",
+    "focus": "Show how queue depth, latency, and retry spikes become one reviewed incident story."
+  },
+  {
+    "bundleId": "redis-cache-collapse",
+    "severity": "SEV2",
+    "lane": "review",
+    "logSample": "samples/logs/redis_cluster_crash.txt",
+    "screenshotSample": "samples/screenshots/redis_dashboard.png",
+    "focus": "Demonstrate cache-failure evidence, degraded fallback behavior, and operator handoff wording."
+  },
+  {
+    "bundleId": "billing-retry-stall",
+    "severity": "SEV2",
+    "lane": "commander-handoff",
+    "logSample": "samples/logs/llm_latency_spike.txt",
+    "screenshotSample": "samples/screenshots/latency_dashboard.png",
+    "focus": "Keep customer-visible billing degradation bounded while showing what a commander needs next."
+  },
+  {
+    "bundleId": "search-read-path-flap",
+    "severity": "SEV3",
+    "lane": "training",
+    "logSample": "samples/logs/redis_cluster_crash.txt",
+    "screenshotSample": "samples/screenshots/redis_dashboard.png",
+    "focus": "Use a lower-severity event to explain replay scoring, schema guidance, and postmortem structure."
+  }
+]

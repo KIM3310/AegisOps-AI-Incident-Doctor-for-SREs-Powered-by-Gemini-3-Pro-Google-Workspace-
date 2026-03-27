@@ -1,0 +1,22 @@
+[
+  {
+    "checkId": "confirm-runtime-mode",
+    "surface": "/api/healthz",
+    "whyItMatters": "Reviewers should confirm demo, local, or live mode before trusting provider-dependent behavior."
+  },
+  {
+    "checkId": "inspect-scorecard",
+    "surface": "/api/runtime/scorecard",
+    "whyItMatters": "Latency, error rates, and replay quality need to stay visible before incident claims are exported."
+  },
+  {
+    "checkId": "review-resource-pack",
+    "surface": "/api/resource-pack",
+    "whyItMatters": "Built-in sample evidence keeps the repo reviewable without live credentials or private telemetry."
+  },
+  {
+    "checkId": "lock-schema",
+    "surface": "/api/schema/report",
+    "whyItMatters": "A stable report contract prevents handoff notes and exports from drifting."
+  }
+]

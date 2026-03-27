@@ -1,0 +1,71 @@
+{
+  "name": "aegisops",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multimodal incident copilot with replay evals, live-session review, and export surfaces.",
+  "type": "module",
+  "scripts": {
+    "dev:web": "vite",
+    "dev:api": "tsx watch server/index.ts",
+    "dev": "concurrently -n api,web -c blue,magenta \"npm run dev:api\" \"npm run dev:web\"",
+    "build": "vite build",
+    "preview": "vite preview",
+    "eval:replays": "NODE_OPTIONS=--disable-warning=ExperimentalWarning node --import tsx scripts/run-incident-replays.ts",
+    "review:smoke": "NODE_OPTIONS=--disable-warning=ExperimentalWarning node --import tsx scripts/review-surface-smoke.ts",
+    "exercise:runtime": "node scripts/exercise-runtime.mjs",
+    "load:runtime": "tsx scripts/load-runtime.ts",
+    "load:k6": "k6 run scripts/k6-runtime-scorecard.js",
+    "typecheck": "tsc --noEmit",
+    "test": "NODE_OPTIONS=--disable-warning=ExperimentalWarning vitest run",
+    "verify": "npm run typecheck && npm test && npm run eval:replays && npm run review:smoke && npm run build"
+  },
+  "dependencies": {
+    "@google/genai": "^1.33.0",
+    "dotenv": "^17.2.2",
+    "express": "^4.18.2",
+    "lucide-react": "^0.560.0",
+    "openai": "^6.32.0",
+    "pino": "^10.3.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.23",
+    "@types/express-serve-static-core": "^5.1.1",
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/supertest": "^7.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.2.1",
+    "jsdom": "^26.0.0",
+    "supertest": "^7.2.2",
+    "tsx": "^4.20.5",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0",
+    "vitest": "^3.2.4"
+  },
+  "overrides": {
+    "minimatch": "^10.2.1"
+  },
+  "author": "Doeon Kim",
+  "homepage": "https://github.com/KIM3310/AegisOps",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KIM3310/AegisOps.git"
+  },
+  "keywords": [
+    "incident-response",
+    "multimodal-ai",
+    "llm-evals",
+    "solution-architecture",
+    "react",
+    "vite",
+    "gemini",
+    "ollama"
+  ],
+  "engines": {
+    "node": ">=20"
+  }
+}

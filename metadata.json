@@ -1,0 +1,22 @@
+{
+  "name": "AegisOps",
+  "description": "Multimodal incident copilot for logs, screenshots, replay evaluation, and export-ready incident handoff.",
+  "version": "0.1.0",
+  "author": "Doeon Kim",
+  "features": [
+    "Multimodal incident analysis",
+    "Reasoning trace generation",
+    "Replay-based evaluation",
+    "Workspace sandbox export preview",
+    "Optional TTS",
+    "Optional web grounding",
+    "Gmail import",
+    "Drive import",
+    "Sheets export",
+    "Docs export",
+    "Slides export",
+    "Calendar integration",
+    "Chat webhook"
+  ],
+  "requestFramePermissions": []
+}
