@@ -15,6 +15,8 @@
     "exercise:runtime": "node scripts/exercise-runtime.mjs",
     "load:runtime": "tsx scripts/load-runtime.ts",
     "load:k6": "k6 run scripts/k6-runtime-scorecard.js",
+    "datadog:plan": "node scripts/datadog-assets.mjs plan",
+    "datadog:sync": "node scripts/datadog-assets.mjs sync",
     "typecheck": "tsc --noEmit",
     "test": "NODE_OPTIONS=--disable-warning=ExperimentalWarning vitest run",
     "verify": "npm run typecheck && npm test && npm run eval:replays && npm run review:smoke && npm run build"

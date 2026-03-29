@@ -24,9 +24,10 @@
 - **Outcome:** passed locally; 169 tests, replay evals at 32/32 checks, review-surface smoke, and production build all completed
 - **Notes:** cloud persistence adapters are still optional and were not required for the local proof run
 
-## Datadog Proof Pack
+## Datadog-Ready Pack
 
 - Incident-response observability pack: [`docs/datadog/README.md`](docs/datadog/README.md)
+- Current state: dashboard and monitor assets are prepared, but live tenant sync is intentionally disabled by default
 - Best use: show how incident intake, RCA generation, replay quality, and provider/runtime health would be monitored in Datadog
 - Strongest story: one response system that ties logs, screenshots, API latency, and replay quality into an operator-facing incident lane
 

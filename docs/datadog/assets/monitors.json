@@ -1,0 +1,59 @@
+[
+  {
+    "name": "{{PREFIX}} AegisOps Analyze Latency Regressed",
+    "type": "query alert",
+    "query": "avg(last_15m):avg:aegisops.analysis.latency_ms{service:{{SERVICE}},env:{{ENV}}} > 3000",
+    "message": "AegisOps incident analysis latency exceeded 3000 ms. Review provider saturation, screenshot payload size, and replay drift before escalating.",
+    "tags": [
+      "service:{{SERVICE}}",
+      "env:{{ENV}}",
+      "repo:AegisOps"
+    ],
+    "options": {
+      "include_tags": true,
+      "notify_audit": false,
+      "new_host_delay": 300,
+      "thresholds": {
+        "critical": 3000
+      }
+    }
+  },
+  {
+    "name": "{{PREFIX}} AegisOps Analyze Route Errors",
+    "type": "query alert",
+    "query": "sum(last_10m):sum:aegisops.http.request.errors{service:{{SERVICE}},env:{{ENV}},route:analyze}.as_count() > 3",
+    "message": "AegisOps recorded more than three analyze-route errors in the last 10 minutes. Inspect the operator handoff path and recent provider failures.",
+    "tags": [
+      "service:{{SERVICE}}",
+      "env:{{ENV}}",
+      "repo:AegisOps"
+    ],
+    "options": {
+      "include_tags": true,
+      "notify_audit": false,
+      "new_host_delay": 300,
+      "thresholds": {
+        "critical": 3
+      }
+    }
+  },
+  {
+    "name": "{{PREFIX}} AegisOps Sev1 Detection",
+    "type": "query alert",
+    "query": "sum(last_15m):sum:aegisops.analysis.count{service:{{SERVICE}},env:{{ENV}},severity:SEV1}.as_count() > 0",
+    "message": "AegisOps observed a SEV1-class incident. Open the incident command board and confirm the follow-up and export path are ready for handoff.",
+    "tags": [
+      "service:{{SERVICE}}",
+      "env:{{ENV}}",
+      "repo:AegisOps"
+    ],
+    "options": {
+      "include_tags": true,
+      "notify_audit": false,
+      "new_host_delay": 300,
+      "thresholds": {
+        "critical": 0
+      }
+    }
+  }
+]

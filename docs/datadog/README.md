@@ -1,8 +1,10 @@
-# AegisOps Datadog Proof Pack
+# AegisOps Datadog-Ready Pack
 
 This pack shows how AegisOps should be presented in Datadog when the conversation is about incident tooling, SRE-adjacent AI systems, or on-call response workflows.
 
-The goal is not to force a live Datadog dependency into the demo. The goal is to make the observability design explicit and reviewable.
+The current repo posture is `Datadog-ready, currently disabled`.
+
+The goal is still not to force a live Datadog dependency into the demo. The repo ships a runnable asset path for dashboards and monitors, but live tenant sync is intentionally off in the default local setup.
 
 ## Why this repo is a natural Datadog story
 
@@ -72,11 +74,20 @@ That maps directly to Datadog-style incident dashboards, monitors, notebooks, an
 - one Datadog notebook or runbook snippet for incident commander handoff
 - one short paragraph connecting replay-eval drift to release risk
 
-## Minimal implementation path
+## Asset files
 
-1. Trace the API endpoints and key provider boundaries.
-2. Send metrics and traces to Datadog.
-3. Build `Incident Command Board` first.
-4. Capture one monitor and one notebook screenshot under `docs/datadog/`.
+- `docs/datadog/assets/dashboard.json`
+- `docs/datadog/assets/monitors.json`
+- `scripts/datadog-assets.mjs`
 
-If you only make one Datadog artifact for AegisOps, make it the `Incident Command Board`. That is the clearest proof for incident AI and SRE-adjacent roles.
+## Sync path
+
+This path is optional and is intentionally not active in the default local setup.
+
+1. Enable the built-in Datadog adapter with `DD_API_KEY`.
+2. Run `npm run datadog:plan` to confirm the board and monitor titles.
+3. Run `node scripts/datadog-assets.mjs validate` once `DD_API_KEY` is present.
+4. Run `npm run datadog:sync` once both `DD_API_KEY` and `DD_APP_KEY` are present.
+5. Capture one monitor and one notebook screenshot under `docs/datadog/`.
+
+If you only make one Datadog artifact for AegisOps, make it the `Incident Command Board`. That is the clearest proof for incident AI and SRE-adjacent roles, even when the live tenant is disabled.
