@@ -10,20 +10,6 @@
 - **Optional:** on-call audio briefing (TTS), export to Google Workspace (Docs/Slides/Sheets/Calendar/Chat)
 - **Providers:** Gemini (default), OpenAI, Ollama (local/offline), demo mode (no keys required)
 
-## Hiring Fit And Proof Boundary
-
-- **Best fit roles:** applied AI engineer, incident AI / SRE-adjacent systems engineer, GenAI solution architect
-- **Strongest public proof:** public Cloudflare Pages surface, replay evals, operator-facing API routes, and demo mode with no keys
-- **What is real here:** structured RCA pipeline, replay-eval logic, server-side key handling, and review surfaces
-- **What is bounded here:** demo mode is deterministic, and GCS / BigQuery persistence stays optional and env-gated
-
-## Latest Verified Snapshot
-
-- **Verified on:** 2026-03-28
-- **Command:** `npm run verify`
-- **Outcome:** passed locally; 169 tests, replay evals at 32/32 checks, review-surface smoke, and production build all completed
-- **Notes:** cloud persistence adapters are still optional and were not required for the local proof run
-
 ## Live Demo
 
 - Cloudflare Pages: https://aegisops-ai-incident-doctor.pages.dev
