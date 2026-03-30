@@ -1,0 +1,78 @@
+{
+  "title": "{{PREFIX}} AegisOps Incident Command Board",
+  "description": "Datadog board for AegisOps incident review, RCA latency, and on-call reliability.",
+  "layout_type": "ordered",
+  "is_read_only": false,
+  "widgets": [
+    {
+      "definition": {
+        "type": "note",
+        "content": "AegisOps Datadog board\\n\\nThis board assumes the built-in Datadog adapter is enabled and shipping incident metrics with service and env tags.",
+        "background_color": "white",
+        "font_size": "16",
+        "show_tick": false,
+        "tick_pos": "50%"
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Incident Volume by Severity",
+        "show_legend": true,
+        "requests": [
+          {
+            "q": "sum:aegisops.analysis.count{service:{{SERVICE}},env:{{ENV}}} by {severity}.as_count()"
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Analysis Latency by Provider",
+        "show_legend": true,
+        "requests": [
+          {
+            "q": "avg:aegisops.analysis.latency_ms{service:{{SERVICE}},env:{{ENV}}} by {provider}"
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "HTTP Errors by Route",
+        "show_legend": true,
+        "requests": [
+          {
+            "q": "sum:aegisops.http.request.errors{service:{{SERVICE}},env:{{ENV}}} by {route}.as_count()"
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Follow-up Latency by Provider",
+        "show_legend": true,
+        "requests": [
+          {
+            "q": "avg:aegisops.followup.latency_ms{service:{{SERVICE}},env:{{ENV}}} by {provider}"
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Provider Usage Distribution",
+        "show_legend": true,
+        "requests": [
+          {
+            "q": "sum:aegisops.provider.usage{service:{{SERVICE}},env:{{ENV}}} by {provider}.as_count()"
+          }
+        ]
+      }
+    }
+  ]
+}
