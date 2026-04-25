@@ -28,17 +28,23 @@ export function AppHeader({ state }: AppHeaderProps) {
   } = state;
 
   return (
-    <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-md border-b border-border transition-all overflow-x-auto" role="banner">
-      <div className="max-w-4xl mx-auto px-4 h-12 flex items-center justify-between min-w-0">
-        <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={handleStartNew} role="button">
+    <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-md border-b border-border transition-all" role="banner">
+      <div className="max-w-4xl mx-auto px-4 min-h-12 py-2 flex flex-col gap-2 sm:h-12 sm:flex-row sm:items-center sm:justify-between sm:py-0">
+        <button
+          type="button"
+          className="flex items-center gap-2 self-start bg-transparent p-0 text-left hover:opacity-80 transition-opacity"
+          onClick={handleStartNew}
+          aria-label="Start a new AegisOps review"
+        >
           <Shield className="w-5 h-5 text-accent fill-accent/10" aria-hidden="true" />
           <span className="text-sm font-semibold tracking-tight">AegisOps</span>
           <span className="text-[9px] px-1.5 py-0.5 bg-accent/10 text-accent rounded-full font-medium border border-accent/20">
             {apiHealth ? (isStaticDemo ? 'Static demo' : apiHealth.mode === 'demo' ? 'Demo mode' : apiHealth.models.analyze) : 'Loading'}
           </span>
-        </div>
-        <div className="flex items-center gap-1.5" role="navigation">
+        </button>
+        <div className="flex flex-wrap items-center gap-1.5" role="navigation" aria-label="AegisOps actions">
           <button
+            type="button"
             onClick={() => {
               if (isStaticDemo) {
                 addToast('info', 'Web grounding needs the local API or live backend. The Pages demo uses recorded local analysis only.');
@@ -67,6 +73,7 @@ export function AppHeader({ state }: AppHeaderProps) {
             </span>
           </button>
           <button
+            type="button"
             onClick={() => {
               if (!tmConfigured) {
                 addToast('error', 'Set VITE_TM_MODEL_URL to enable Teachable Machine.');
@@ -90,6 +97,7 @@ export function AppHeader({ state }: AppHeaderProps) {
           </button>
           {!isOllamaMode && !isStaticDemo && (
             <button
+              type="button"
               onClick={() => setShowApiKeyPanel((prev) => !prev)}
               className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors"
               aria-label="Toggle API key panel"
@@ -102,17 +110,23 @@ export function AppHeader({ state }: AppHeaderProps) {
               </span>
             </button>
           )}
-          <button onClick={() => setShowGoogleImport(true)} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
+          <button type="button" onClick={() => setShowGoogleImport(true)} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
             <Download className="w-3.5 h-3.5" />Import
           </button>
-          <button onClick={() => setShowDatasetExport(true)} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
+          <button type="button" onClick={() => setShowDatasetExport(true)} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
             <Table2 className="w-3.5 h-3.5" />Dataset
           </button>
-          <button onClick={() => setShowHistory(true)} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
+          <button
+            type="button"
+            onClick={() => setShowHistory(true)}
+            className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors"
+            aria-label="Open incident history"
+            title="Open incident history"
+          >
             <History className="w-3.5 h-3.5" />
             {savedIncidents.length > 0 && <span className="bg-accent/20 text-accent px-1.5 rounded-full text-[10px] font-bold min-w-[1.25rem] text-center">{savedIncidents.length}</span>}
           </button>
-          <button onClick={copyReviewStateLink} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
+          <button type="button" onClick={copyReviewStateLink} className="h-8 px-2.5 text-xs text-text-muted hover:text-text hover:bg-bg-hover rounded-md flex items-center gap-1.5 transition-colors">
             <FileText className="w-3.5 h-3.5" />
             Copy Review Link
           </button>

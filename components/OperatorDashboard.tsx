@@ -106,10 +106,6 @@ export function OperatorDashboard({ state }: OperatorDashboardProps) {
         </button>
       </div>
 
-      <p className="text-[11px] text-text-dim">
-        Hotkeys: <span className="text-text">&#x2318;Enter</span> analyze · <span className="text-text">L</span> link · <span className="text-text">R</span> routes · <span className="text-text">K</span> checklist · <span className="text-text">E</span> evidence · <span className="text-text">B</span> bundle · <span className="text-text">M</span> payload budget · <span className="text-text">X</span> escalation brief · <span className="text-text">P</span> preset · <span className="text-text">H</span> history
-      </p>
-
       <div className="flex flex-wrap gap-2">
         <span className="text-[10px] px-2 py-1 rounded-full border bg-accent/10 text-accent border-accent/20">
           {runtimePosture}

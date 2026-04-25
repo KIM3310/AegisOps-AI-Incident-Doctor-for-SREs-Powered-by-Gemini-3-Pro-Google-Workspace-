@@ -1016,9 +1016,6 @@ export function useAppState() {
       } else if (key === 'h') {
         e.preventDefault();
         setShowHistory((prev) => !prev);
-      } else if (key === '?') {
-        e.preventDefault();
-        addToast('info', 'Hotkeys: \u2318Enter analyze \u00b7 L link \u00b7 R routes \u00b7 K checklist \u00b7 E evidence \u00b7 B bundle \u00b7 M payload budget \u00b7 X escalation brief \u00b7 P preset \u00b7 H history');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
