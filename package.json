@@ -25,7 +25,7 @@
   "dependencies": {
     "@google/genai": "^1.52.0",
     "dotenv": "^17.2.2",
-    "express": "^4.22.2",
+    "express": "^5.2.1",
     "express-rate-limit": "^8.6.2",
     "lucide-react": "^0.577.0",
     "openai": "^6.49.0",
@@ -52,7 +52,7 @@
   },
   "overrides": {
     "minimatch": "^10.2.1",
-    "qs": "^6.15.2",
+    "qs": "^6.16.0",
     "shell-quote": "^1.8.4",
     "ws": "^8.20.1",
     "esbuild": "^0.28.1"
