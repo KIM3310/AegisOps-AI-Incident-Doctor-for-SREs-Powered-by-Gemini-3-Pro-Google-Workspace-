@@ -46,3 +46,7 @@ The public demo and replay fixtures are synthetic. Their passing checks do not e
 - [Detailed reference](REFERENCE.md)
 - [Engineering changes and regression cases](docs/engineering-notes.md)
 - [Cloud architecture](docs/cloud-ai-architecture.md) · [Machine-readable blueprint](docs/architecture/blueprint.json) · [Blueprint validator](scripts/validate_architecture_blueprint.py)
+
+[Design decisions and implementation evidence](docs/IMPLEMENTATION_NOTES.md)
+
+[Observed local performance and method](docs/LOCAL_BENCHMARK.md)

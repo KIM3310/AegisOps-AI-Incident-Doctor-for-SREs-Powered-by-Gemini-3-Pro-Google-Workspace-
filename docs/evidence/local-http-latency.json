@@ -1,0 +1,70 @@
+{
+  "schema": "aegisops-local-http-latency-v1",
+  "recordedAt": "2026-09-07T11:20:05.922Z",
+  "scope": "Actual loopback HTTP /api/analyze with uncached synthetic demo provider and temporary file persistence; excludes model inference.",
+  "environment": {
+    "node": "v22.23.2",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M4",
+    "logicalCpus": 10,
+    "memoryGiB": 16
+  },
+  "method": {
+    "warmupRequests": 5,
+    "measuredRequests": 30,
+    "concurrency": 1,
+    "cacheTtlSec": 0,
+    "percentile": "nearest rank",
+    "provider": "demo",
+    "images": 0
+  },
+  "latencyMs": {
+    "p50": 1.9907500000000482,
+    "p95": 3.6717499999999745,
+    "min": 0.558084000000008,
+    "max": 5.932666999999924
+  },
+  "samplesMs": [
+    2.7022910000000593,
+    2.3865409999999656,
+    2.352999999999952,
+    5.932666999999924,
+    3.6717499999999745,
+    2.363833999999997,
+    2.0949170000000095,
+    1.9931660000000875,
+    1.9364170000000058,
+    2.046583000000055,
+    1.8054169999999203,
+    1.7373750000000427,
+    1.715708999999947,
+    0.558084000000008,
+    1.786375000000021,
+    1.8370409999999993,
+    1.79099999999994,
+    0.64162500000009,
+    1.784708999999907,
+    2.3788749999999936,
+    3.2465419999999767,
+    1.9907500000000482,
+    1.812249999999949,
+    1.8090000000000828,
+    1.7162499999999454,
+    1.6977920000000495,
+    2.067042000000015,
+    1.9927920000000086,
+    2.17679099999998,
+    2.3725840000000744
+  ],
+  "sourceHashes": {
+    "server/index.ts": "3475f22d96c66f9b229e744d28967adbec123071b56a77123d21941235dd1abe",
+    "server/lib/demo.ts": "7ed4f2db685182c157ddcc5273629e975225096151d6e0a4f97e65b7a59febde",
+    "scripts/benchmark-local.ts": "f8c8f5447ee50196d4d2b22201a04edb9e217c726106f9bb22a89ede7a2dde17"
+  },
+  "limits": [
+    "No LLM latency, image understanding or real incident quality measured",
+    "Small single-run local sample, not production throughput or an SLA",
+    "Results vary with host contention and JIT state"
+  ]
+}
