@@ -20,7 +20,8 @@
     "lint": "npm run typecheck",
     "typecheck": "tsc --noEmit",
     "test": "NODE_OPTIONS=--disable-warning=ExperimentalWarning vitest run",
-    "verify": "npm run typecheck && npm test && npm run eval:replays && npm run architecture:smoke && npm run build"
+    "verify": "npm run typecheck && npm test && npm run eval:replays && npm run architecture:smoke && npm run build",
+    "benchmark:local": "tsx scripts/benchmark-local.ts"
   },
   "dependencies": {
     "@google/genai": "^1.52.0",
