@@ -1,5 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { z } from "zod";
 
 export type LiveSessionLane =
   | "incident-command"
@@ -24,6 +25,22 @@ export type LiveSessionEventRecord = {
   timestamp: string;
   ttsChars?: number;
 };
+
+const eventSchema = z.object({
+  eventKind: z.enum(["analyze", "followup", "tts"]),
+  lane: z.enum(["incident-command", "commander-handoff", "review", "training"]),
+  provider: z.string().min(1),
+  sessionId: z.string().min(1),
+  timestamp: z.iso.datetime({ offset: true }).transform(value => new Date(value).toISOString()),
+  imageCount: z.number().int().nonnegative().optional(),
+  logsChars: z.number().int().nonnegative().optional(),
+  ttsChars: z.number().int().nonnegative().optional(),
+  question: z.string().optional(),
+  reportSeverity: z.string().optional(),
+  reportSummary: z.string().optional(),
+  reportTitle: z.string().optional(),
+  requestId: z.string().optional(),
+});
 
 function resolveSessionStorePath(): string {
   const configured = String(process.env.AEGISOPS_SESSION_STORE_PATH || "").trim();
@@ -72,7 +89,8 @@ function readLiveSessionEvents(): LiveSessionEventRecord[] {
     .filter(Boolean)
     .map((line) => {
       try {
-        return JSON.parse(line) as LiveSessionEventRecord;
+        const parsed = eventSchema.safeParse(JSON.parse(line));
+        return parsed.success ? parsed.data : null;
       } catch {
         return null;
       }
@@ -208,11 +226,12 @@ export function buildSeverityTrendAggregation() {
 export function buildLiveSessionStoreSummary(limit = 5) {
   const targetPath = resolveSessionStorePath();
   const events = readLiveSessionEvents();
-  const items = buildSessionSummaries(events).slice(0, Math.max(1, limit));
+  const summaries = buildSessionSummaries(events);
+  const items = summaries.slice(0, Math.max(1, limit));
   return {
     enabled: true,
     path: targetPath,
-    sessionCount: items.length,
+    sessionCount: summaries.length,
     totalEvents: events.length,
     recentSessions: items,
   };
