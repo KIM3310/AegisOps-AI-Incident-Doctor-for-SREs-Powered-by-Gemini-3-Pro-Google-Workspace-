@@ -1,379 +1,52 @@
-# AegisOps -- Multimodal Incident Review System
+# AegisOps
 
-[![CI](https://github.com/KIM3310/AegisOps/actions/workflows/ci.yml/badge.svg)](https://github.com/KIM3310/AegisOps/actions)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+**Incident evidence → structured analysis → operator handoff.**
 
-**AegisOps** turns raw incident logs and monitoring screenshots into structured, decision-ready incident reports -- complete with severity classification, root-cause hypotheses, timeline reconstruction, and operator handoff artifacts. A deterministic replay suite tests schema, rubric, and workflow behavior before live model output is trusted; it does not prove every incident conclusion.
+A React/TypeScript application that combines logs and monitoring screenshots into an incident report, with explicit severity, hypotheses, timeline, and follow-up actions. The default demo runs without provider keys.
 
-## Three-Minute Proof
+[Demo](https://aegisops-ai-incident-doctor.pages.dev/) · [CI](https://github.com/KIM3310/AegisOps/actions/workflows/ci.yml) · [MIT](LICENSE)
 
-1. Open the Cloudflare demo or local UI and run one incident scenario.
-2. Inspect the replay eval suite before trusting live model output.
-3. Run `npm run verify` to cover typecheck, tests, replay evals, surface smoke, and build.
-4. Review export and handoff artifacts as operator-facing proof, not just the chat flow.
+## Inspect the implementation
 
-## System Overview
+| Engineering problem | Implementation | Verify |
+|---|---|---|
+| Make model output usable outside a chat window | [Report schemas](server/lib/schemas.ts) and provider adapters under `server/lib/` | Run the incident replay suite against four fixtures. |
+| Keep a review usable after interrupted writes | [Session storage](server/lib/sessionStore.ts) validates persisted records and normalizes timestamps. | [Corrupt-record, timezone, and pagination tests](__tests__/session-store.test.ts) |
+| Separate UI and model credentials | The browser calls the local API; model credentials stay in the server environment. | Inspect `server/index.ts` and the client services. |
 
-| Lens | Current answer |
-|---|---|
-| Users | SOC, IT operations, managed service, and incident-response teams that need clearer handoff after noisy incidents. |
-| System scope | Multimodal incident analysis, schema-conformant reports, replay evals, follow-up Q&A, and export paths. |
-| Operating boundary | Browser never receives provider keys; demo mode is deterministic and no-key by default. |
-| Evaluation path | `npm run verify`, live Cloudflare Pages demo, replay eval suite, and surface smoke script. |
-
-## Evaluation Path
-
-- **Start here:** Open the Cloudflare demo, run one incident scenario, then inspect replay eval coverage.
-- **Local demo:** Run `npm install && npm run dev`; the UI runs on `http://127.0.0.1:3000` and API on `http://127.0.0.1:8787`.
-- **Checks:** Run `npm run verify`; it covers typecheck, tests, replay evals, surface smoke, and build.
-
-## Service Launch Playbook
-
-- [Service launch playbook](docs/service-launch-playbook.md) maps the repository to intended audiences, operating gates, operating boundaries, and risk controls.
-
-## Architecture Notes
-
-- [Architecture guide](docs/architecture-evidence-map.md) summarizes the system scope, first files to inspect, runtime commands, and known boundaries.
-- [Quality notes](docs/quality-gate.md) lists the local checks, CI surface, and release expectations for this repository.
-- [Enterprise readiness notes](docs/enterprise-readiness.md) outlines security, data, operations, integration, and handoff expectations.
-
-## Live Demo
-
-| Surface | Link |
-|---|---|
-| Cloudflare Pages | https://aegisops-ai-incident-doctor.pages.dev |
-| Google AI Studio | [Open in AI Studio](https://ai.studio/apps/drive/1nInCvCJjSXy0IQGiDeK9gbsjjhhPqtlg?fullscreenApplet=true) |
-| Demo video | [Watch on YouTube](https://youtu.be/FOcjPcMheIg) |
-
----
-
-## Architecture
-
-```mermaid
-flowchart LR
-    subgraph Intake ["1 - Intake"]
-        Logs["Raw Logs"]
-        Screenshots["Monitoring Screenshots"]
-    end
-
-    subgraph Analysis ["2 - Multimodal Analysis"]
-        API["Express API\n(server-side key handling)"]
-        Gemini["Gemini"]
-        OpenAI["OpenAI"]
-        Ollama["Ollama (local)"]
-        Demo["Demo mode\n(no keys)"]
-    end
-
-    subgraph Output ["3 - Structured Output"]
-        Report["Incident Report\n(JSON schema)"]
-        Postmortem["Postmortem Pack\nSeverity + RCA + Timeline"]
-        FollowUp["Follow-Up Q&A\n(grounded on report)"]
-        TTS["Audio Briefing\n(TTS)"]
-    end
-
-    subgraph Eval ["4 - Replay Evals"]
-        Suite["4 scenarios\n32 rubric checks"]
-        Buckets["Failure Buckets\nby category"]
-    end
-
-    subgraph Handoff ["5 - Operator Handoff"]
-        Export["JSON / Markdown\nSlack / Jira"]
-        Workspace["Google Workspace\nDocs / Slides / Sheets\nCalendar / Chat"]
-        Persist["GCS Artifacts\nBigQuery Analytics"]
-    end
-
-    Logs --> API
-    Screenshots --> API
-    API --> Gemini
-    API --> OpenAI
-    API --> Ollama
-    API --> Demo
-    Gemini --> Report
-    OpenAI --> Report
-    Ollama --> Report
-    Demo --> Report
-    Report --> Postmortem
-    Report --> FollowUp
-    Report --> TTS
-    Report --> Suite
-    Suite --> Buckets
-    Report --> Export
-    Report --> Workspace
-    Report --> Persist
+```text
+Logs + screenshots → server provider → validated report → review UI / exports
+                                ↘ persisted incident sessions
+Synthetic incident fixtures → deterministic replay checks
 ```
 
-**Key design principle:** API keys never reach the browser. The React frontend calls `/api/analyze`, `/api/followup`, `/api/tts` -- the Express API reads provider keys server-side and returns validated, schema-conformant JSON.
+## Run it
 
----
-
-## Quick Start
-
-### Prerequisites
-
-- **Node.js >= 20** and npm
-- (Optional) A Gemini or OpenAI API key for live analysis
-- (Optional) [Ollama](https://ollama.com) for fully offline local analysis
-
-### Run locally
+Requires Node.js 22.12+.
 
 ```bash
-# 1. Clone and install
-git clone https://github.com/KIM3310/AegisOps.git
-cd AegisOps
-npm install
-
-# 2. Configure (optional -- runs in demo mode without keys)
-cp .env.example .env
-# Edit .env to add GEMINI_API_KEY or OPENAI_API_KEY
-
-# 3. Start both API and UI
+npm ci
 npm run dev
-# UI:  http://127.0.0.1:3000
-# API: http://127.0.0.1:8787
 ```
 
-If no API key is set, the system runs in **demo mode** -- deterministic output, no external calls, and the full replay eval suite still runs.
-
-### Verify the build
+Open `http://127.0.0.1:3000`. The local API listens on port 8787.
 
 ```bash
-npm run verify   # typecheck + test + replay evals + surface smoke + build
+npm run verify
 ```
 
----
+This runs TypeScript checks, unit tests, replay evaluation, an API architecture smoke check, and the production build.
 
-## Tech Stack
+## Scope
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| Frontend | React 19, Vite 8, Lucide Icons | Incident input, report rendering, operator dashboard |
-| Backend | Express, Node.js 20+ | API routing, key management, payload validation |
-| LLM Providers | Gemini (default), OpenAI, Ollama | Multimodal incident analysis + follow-up Q&A |
-| Validation | Zod 4 | Request/response schema enforcement |
-| Logging | Pino | Structured JSON logging |
-| Eval Framework | Custom replay harness | 4 scenarios, 32 rubric checks, failure bucket aggregation |
-| Auth | Bearer token + OIDC (RS256 JWT) | Operator access control with role-based gating |
-| Persistence | GCS + BigQuery (optional) | Report artifacts + analytics rows |
-| Monitoring | Prometheus + Datadog (optional) | HTTP metrics, analysis latency, provider usage |
-| Cloud Infra | Terraform (Cloud Run), Cloudflare Pages | IaC deployment, static hosting |
-| Containers | Docker, Kubernetes (HPA, Ingress) | Production container orchestration |
-| CI/CD | GitHub Actions | Typecheck, test, replay proof, build, artifact upload |
-| Language | TypeScript 5.9 (strict mode) | End-to-end type safety |
+The public demo and replay fixtures are synthetic. Their passing checks do not establish real incident diagnosis accuracy. Provider-backed inference and optional cloud integrations require separate configuration. The file-backed session log is intended for a single process and needs retention/rotation for sustained operation.
 
----
+## Further reading
 
-## Core API
+- [Detailed reference](REFERENCE.md)
+- [Engineering changes and regression cases](docs/engineering-notes.md)
+- [Cloud architecture](docs/cloud-ai-architecture.md) · [Machine-readable blueprint](docs/architecture/blueprint.json) · [Blueprint validator](scripts/validate_architecture_blueprint.py)
 
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/analyze` | POST | Analyze logs + screenshots, return structured incident report |
-| `/api/followup` | POST | Follow-up Q&A grounded on the generated report |
-| `/api/tts` | POST | Text-to-speech audio briefing (Gemini TTS) |
-| `/api/evals/replays` | GET | Replay eval suite results (4 scenarios / 32 checks) |
-| `/api/live-sessions` | GET | Persisted incident session history |
-| `/api/meta` | GET | Runtime modes, replay summary, operator checklist |
-| `/api/healthz` | GET | Deployment mode, provider, limits |
-| `/api/summary-pack` | GET | Inspectable trust surface with replay proof |
-| `/api/schema/report` | GET | Incident report JSON schema contract |
-| `/api/metrics` | GET | Prometheus-format metrics |
+[Design decisions and implementation evidence](docs/IMPLEMENTATION_NOTES.md)
 
----
-
-## Incident Replay Evals
-
-The replay eval suite validates report quality against fixed scenarios with a structured rubric before the live model path is trusted.
-
-```bash
-npm run eval:replays
-```
-
-**Suite:** `evals/incidentReplays.ts` | **Scoring:** `server/lib/replayEvals.ts`
-
-### Rubric categories
-
-| Category | What it checks |
-|---|---|
-| `severity_match` | Severity classification matches the expected level |
-| `title_keywords` | Title captures the dominant failure mode |
-| `tag_coverage` | Operational tags cover the main systems involved |
-| `timeline_coverage` | Timeline retains enough events for reconstruction |
-| `root_cause_coverage` | Root causes name the failure mode, not just symptoms |
-| `actionability` | Action items are concrete and operator-facing |
-| `reasoning_trace` | Reasoning preserves Observations, Hypotheses, Decision Path |
-| `confidence_range` | Confidence score stays within the rubric band |
-
-### Current scenarios
-
-| Scenario | Description |
-|---|---|
-| `llm-latency-spike` | SLO breach, queue saturation, memory pressure, autoscaling recovery |
-| `redis-oom-failover` | Redis master OOM, quorum loss, cache miss storm during failover |
-| `payments-retry-storm` | 5xx spike + retry fan-out and request queue growth |
-| `search-warning-buildup` | Pre-outage warning with latency and queue buildup (no hard outage) |
-
-See `docs/INCIDENT_REPLAY_EVALS.md` for full documentation.
-
----
-
-## Deployment
-
-### Local development
-
-```bash
-npm install && npm run dev
-```
-
-### Cloudflare Pages
-
-```bash
-npm run build && wrangler pages deploy dist/
-```
-
-### Docker / Cloud Run
-
-```bash
-docker build -t aegisops .
-docker run -e GEMINI_API_KEY=<key> -e HOST=0.0.0.0 -p 8787:8787 aegisops
-```
-
-### Terraform (GCP Cloud Run)
-
-```bash
-cd infra/terraform
-terraform init
-terraform plan -var="project_id=<your-project>" -var="image=<your-image>"
-terraform apply
-```
-
-### Kubernetes
-
-Pre-built manifests in `infra/k8s/` include Deployment, Service, HPA, Ingress, and ConfigMap.
-
-### Optional GCP persistence
-
-Set `GOOGLE_APPLICATION_CREDENTIALS` + `GCP_PROJECT_ID` to persist incident artifacts to GCS and analytics rows to BigQuery.
-
----
-
-## Project Structure
-
-```
-AegisOps/
-  App.tsx                    # React app root
-  types.ts                   # Shared TypeScript types
-  constants.ts               # Sample presets, review lenses
-  components/                # React UI components (26 files)
-  hooks/                     # React hooks (app state, auth, storage)
-  services/                  # Frontend service clients (Google APIs, Gemini, export)
-  server/
-    index.ts                 # Express API server (~700 lines, 15+ routes)
-    lib/
-      gemini.ts              # Gemini provider (analyze, follow-up, TTS)
-      openai.ts              # OpenAI provider (analyze, follow-up)
-      ollama.ts              # Ollama provider (analyze, follow-up)
-      demo.ts                # Deterministic demo mode
-      replayEvals.ts         # Replay eval scoring and bucket aggregation
-      schemas.ts             # Zod request validation schemas
-      operatorAccess.ts      # Bearer + OIDC operator auth
-      gcp-persistence.ts     # GCS artifact upload, BigQuery analytics
-      prometheus.ts          # Prometheus metrics
-      datadog-adapter.ts     # Datadog integration
-      aws-adapter.ts         # AWS S3/SQS/CloudWatch integration
-      ...
-  evals/
-    incidentReplays.ts       # 4 replay scenarios with expected rubrics
-  __tests__/                 # Vitest unit and integration suite
-  scripts/                   # CLI tools (replay runner, smoke tests, load tests)
-  infra/
-    terraform/               # GCP Cloud Run IaC
-    k8s/                     # Kubernetes manifests
-  docs/                      # Architecture docs, evidence, SVGs
-  samples/                   # Sample logs, screenshots, resource packs
-  .github/workflows/         # CI pipeline (test, build, artifact upload)
-```
-
----
-
-## Testing
-
-```bash
-npm test                    # Unit and integration tests (Vitest)
-npm run typecheck           # TypeScript strict mode check
-npm run eval:replays        # Replay eval suite (4 scenarios / 32 checks)
-npm run architecture:smoke        # Review surface smoke tests
-npm run verify              # All of the above + build
-```
-
----
-
-## Environment Variables
-
-See `.env.example` for the full list. Key variables:
-
-| Variable | Required | Description |
-|---|---|---|
-| `LLM_PROVIDER` | No | `auto` (default), `gemini`, `openai`, `ollama`, `demo` |
-| `GEMINI_API_KEY` | For live mode | Google Gemini API key |
-| `OPENAI_API_KEY` | For OpenAI mode | OpenAI API key |
-| `OLLAMA_BASE_URL` | For local mode | Ollama server URL (default: `http://127.0.0.1:11434`) |
-| `GCP_PROJECT_ID` | For persistence | GCP project for GCS + BigQuery |
-| `AEGISOPS_OPERATOR_TOKEN` | For token auth | Static operator bearer token |
-| `AEGISOPS_OPERATOR_ALLOWED_ROLES` | No | Comma-separated roles accepted for protected mutation routes |
-| `AEGISOPS_OPERATOR_SESSION_SECRET` | For durable/OIDC sessions | High-entropy server-only cookie signing secret; otherwise sessions use a per-process secret |
-| `DD_API_KEY` | For monitoring | Datadog API key |
-
----
-
-## License
-
-MIT
-
----
-
-Built by [Doeon Kim](https://github.com/KIM3310)
-
-## Cloud + AI Architecture
-
-- [Cloud + AI architecture blueprint](docs/cloud-ai-architecture.md)
-- [Machine-readable architecture manifest](docs/architecture/blueprint.json)
-- Validation command: `python3 scripts/validate_architecture_blueprint.py`
-
-## Enterprise Productization
-
-- [Product operating model](docs/product-operating-model.md) defines the product scope, trust boundary, operating checks, and service path for this repository.
-
-## System Architecture
-
-- [System architecture](docs/system-architecture.md) maps the runtime boundary, data/control flow, cloud or local deployment surface, and operating assumptions for this repository.
-
-## Service Architecture
-
-- [Service architecture](docs/service-architecture.md) defines the cloud resources, account information, usage controls, and production guardrails needed to turn this repo into a scoped service without publishing public financial assumptions.
-
-<!-- search-growth-readme:start -->
-
-## Search And Service Surface
-
-- Public entry: public replay demo plus downloadable incident-readout template
-- Paid boundary: team workspace for incident packs, replay history, export branding, and private provider keys
-- Canonical URL: https://aegisops-ai-incident-doctor.pages.dev/
-- Lead capture: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=AegisOps&inquiry=incident-operations-exercise#private-inquiry
-- Resource route: https://kim3310-doeon-kim-portfolio.pages.dev/resources/AegisOps/
-- Commercial route: https://kim3310-doeon-kim-portfolio.pages.dev/?offer=AegisOps#service-offers
-- Machine-readable offer: [docs/service-offer.json](docs/service-offer.json)
-- Search growth implementation: [docs/search-growth-implementation.md](docs/search-growth-implementation.md)
-- Revenue architecture: [docs/revenue-architecture.md](docs/revenue-architecture.md)
-
-<!-- search-growth-readme:end -->
-
-<!-- KIM3310:AD-DATA-PIVOT:START -->
-## Free Resource, Advertising, and Aggregate Data
-
-- [Public utility and architecture checklist](https://kim3310-doeon-kim-portfolio.pages.dev/resources/AegisOps/)
-- Revenue model: contextual advertising on the policy-eligible central resource page.
-- Aggregate value: anonymous aggregate incident-readiness topic demand and checklist completion counts
-- Boundary: ads allowed only on public incident-readiness articles and resource pages; replay boards, reports, evidence views, and operator handoff flows are ad-free
-- Consent defaults off, DNT/GPC fail closed, and personal or sensitive data is never sold.
-<!-- KIM3310:AD-DATA-PIVOT:END -->
+[Observed local performance and method](docs/LOCAL_BENCHMARK.md)
